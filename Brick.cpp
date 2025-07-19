@@ -4,7 +4,7 @@ Brick::Brick(int level) : GameElement() {
 	_brickHeight = sizeY;
 	_brickWidth = sizeX;
 	_brickLevel = level;
-	unsigned int color[RGB] = { 255, 255, 255 };
+	unsigned int color[3] = { 255, 255, 255 };
 }
 
 bool Brick::isHit(int ballX, int ballY) {
@@ -14,6 +14,8 @@ bool Brick::isHit(int ballX, int ballY) {
 		}
 	}
 	return false;*/
+
+	return false;
 }
 
 int Brick::height() {

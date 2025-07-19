@@ -1,0 +1,26 @@
+﻿  GameScreen.cpp
+D:\projects\cpp\arcanoid\GameElement.h(1,7): error C2011: GameElement: переопределение типа "class"
+  (компиляция исходного файла "GameScreen.cpp")
+      D:\projects\cpp\arcanoid\GameElement.h(1,7):
+       см. объявление "GameElement"
+  
+D:\projects\cpp\arcanoid\Brick.h(3,7): error C2011: Brick: переопределение типа "class"
+  (компиляция исходного файла "GameScreen.cpp")
+      D:\projects\cpp\arcanoid\Brick.h(3,7):
+       см. объявление "Brick"
+  
+D:\projects\cpp\arcanoid\GameScreen.cpp(4,18): error C2027: использование неопределенного типа "Brick"
+      D:\projects\cpp\arcanoid\Brick.h(3,7):
+       см. объявление "Brick"
+  
+  Platform.cpp
+D:\projects\cpp\arcanoid\GameElement.h(1,7): error C2011: GameElement: переопределение типа "class"
+  (компиляция исходного файла "Platform.cpp")
+      D:\projects\cpp\arcanoid\GameElement.h(1,7):
+       см. объявление "GameElement"
+  
+D:\projects\cpp\arcanoid\Platform.cpp(4,35): error C2027: использование неопределенного типа "GameElement"
+      D:\projects\cpp\arcanoid\GameElement.h(1,7):
+       см. объявление "GameElement"
+  
+  Создание кода...

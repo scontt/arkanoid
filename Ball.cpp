@@ -4,7 +4,7 @@ Ball::Ball() : GameElement() {
 	ballXsize = sizeX / 3;
 	ballYsize = sizeY;
 
-	unsigned int color[RGB] = { 255, 255, 255 };
+	unsigned int color[3] = { 255, 255, 255 };
 }
 
 void Ball::Move() {

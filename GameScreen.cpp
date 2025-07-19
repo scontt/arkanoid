@@ -6,7 +6,7 @@ void GameScreen::Fill(Brick brick) {
 	{
 		for (size_t i = 0; i < screenYbrickSize; i++)
 		{
-			bricks.push_back(Brick())
+			bricks.push_back(brick);
 		}
 	}
 }
