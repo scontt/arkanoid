@@ -134,7 +134,6 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameElement.h" />
     <ClInclude Include="GameScreen.h" />
-    <ClInclude Include="HitStates.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
