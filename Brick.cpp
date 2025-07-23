@@ -1,19 +1,18 @@
 #include "Brick.h"
+#include "Ball.h"
 
-Brick::Brick(int level) : GameElement() {
-	_brickHeight = sizeY;
-	_brickWidth = sizeX;
+int Brick::_brickHeight = GameElement::sizeY;
+int Brick::_brickWidth = GameElement::sizeX;
+
+Brick::Brick(int level, int x, int y) : GameElement() {
+	_brickXcoordinate = x;
+	_brickYcoordinate = y;
 	_brickLevel = level;
 	unsigned int color[3] = { 255, 255, 255 };
 }
 
-bool Brick::isHit(int ballX, int ballY) {
-	/*if (ballX >= brickX - hitbox && ballX < brickX + width + hitbox) {
-		if (ballY >= brickY - hitbox && ballY < brickY + width + hitbox) {
-			return true;
-		}
-	}
-	return false;*/
+bool Brick::isHit() {
+	
 
 	return false;
 }
@@ -24,4 +23,12 @@ int Brick::height() {
 
 int Brick::width() {
 	return _brickWidth;
+}
+
+int Brick::x() {
+	return _brickXcoordinate;
+}
+
+int Brick::y() {
+	return _brickYcoordinate;
 }

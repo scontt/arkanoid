@@ -1,18 +1,26 @@
+#include <list>
+#include <windows.h>
+#include <stdio.h>
 #include "Brick.h"
 #include <list>
 
+#pragma once
+
 class GameScreen {
 private:
-	static const int screenXbrickSize = 8;
-	static const int screenYbrickSize = 8;
+	static int screenXbrickCount;
+	static int screenYbrickCount;
 
-	float screenWidth, screenHeight;
-	std::list<Brick> bricks;
+	static int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 
 public:
-	void Fill(Brick brick);
+	GameScreen();
+	GameScreen(int width, int height);
+	void Fill(HWND, HDC, PAINTSTRUCT, std::list<Brick> bricks);
 	void Clear();
 
-	float width();
-	float height();
+	static int width();
+	static int height();
+	static int halfWidth();
+	static int halfHeight();
 };

@@ -130,6 +130,7 @@
     <ClInclude Include="arcanoid.h" />
     <ClInclude Include="Ball.h" />
     <ClInclude Include="Brick.h" />
+    <ClInclude Include="Drawer.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameElement.h" />
     <ClInclude Include="GameScreen.h" />
@@ -141,6 +142,7 @@
     <ClCompile Include="arcanoid.cpp" />
     <ClCompile Include="Ball.cpp" />
     <ClCompile Include="Brick.cpp" />
+    <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="GameScreen.cpp" />
     <ClCompile Include="Platform.cpp" />
   </ItemGroup>

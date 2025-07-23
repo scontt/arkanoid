@@ -3,6 +3,13 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <gdiplus.h>
+#include <stdio.h>
+#include <chrono>
+
+#include "GameScreen.h"
+#include "Ball.h"
+#include "Drawer.h"
+
 #pragma comment(lib,"gdiplus.lib")
 
 #define MAX_LOADSTRING 100
@@ -12,16 +19,25 @@
 HINSTANCE hInst;                                // текущий экземпляр
 WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
 WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса главного окна
-bool isPrepared = false;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+bool isScreenPrepared = false;
+int SCREEN_WIDTH = 800;
+int SCREEN_HEIGHT = 600;
+GameScreen screen;
+Ball ball;
+Platform platform;
+std::chrono::steady_clock::time_point lastUpdate;
+bool isStarted = false;
+std::list<Brick> bricks;
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-void				PrepareScreen(HWND, HDC);
+void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>);
+
+Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+ULONG_PTR gdiplusToken;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -30,9 +46,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-
-	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	ULONG_PTR gdiplusToken;
 
 	Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
@@ -126,14 +139,32 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	POINT pt;
+	static int newX;
 
 	switch (message)
 	{
-	case WM_LBUTTONDOWN: {
-		pt.x = GET_X_LPARAM(lParam);
-		pt.y = GET_Y_LPARAM(lParam);
+	case WM_CREATE:
+	{
+		lastUpdate = std::chrono::steady_clock::now();
+		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 	}
+	case WM_KEYDOWN:
+	{
+		isStarted = true;
+	}
+	case WM_MOUSEMOVE:
+	{
+		newX = GET_X_LPARAM(lParam);
+
+		platform.Move(newX - platform.width() / 2);
+		RECT oldPlatform = { platform.lastX(), platform.y(), platform.lastX() + platform.width(), platform.y() + platform.height() };
+		RECT newPlatform = { platform.currentX(), platform.y(), platform.currentX() + platform.width(), platform.y() + platform.height() };
+
+		UnionRect(&oldPlatform, &oldPlatform, &newPlatform);
+
+		InvalidateRect(hWnd, &oldPlatform, FALSE);
+	}
+	break;
 	case WM_COMMAND:
 	{
 		int wmId = LOWORD(wParam);
@@ -155,24 +186,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (wParam) {
 		case ID_TIMER1:
-			
-			break;
+			if (isStarted) {
+				auto now = std::chrono::steady_clock::now();
+				float deltaTime = std::chrono::duration<float>(now - lastUpdate).count();
+				lastUpdate = now;
+
+				int newBallPoint = ball.speed() * deltaTime;
+
+				RECT newBall = ball.Move(newBallPoint, newBallPoint);
+				ball.CheckCollition(platform, bricks);
+				InvalidateRect(hWnd, &newBall, FALSE);
+			}
 		}
+		break;
 	}
 	case WM_PAINT:
 	{
-		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 
-		if (!isPrepared)
-			PrepareScreen(hWnd, hdc);
+		if (!isScreenPrepared)
+			PrepareScreen(hWnd, hdc, ps, bricks);
 
+		Drawer::ErasePlatform(hWnd, ps, hdc, platform);
+		Drawer::DrawPlatform(hWnd, ps, hdc, platform);
+
+		Drawer::EraseBall(hWnd, ps, hdc, ball);
+		Drawer::DrawBall(hWnd, ps, hdc, ball);
 
 		EndPaint(hWnd, &ps);
 	}
 	break;
 	case WM_DESTROY:
+		KillTimer(hWnd, ID_TIMER1);
 		PostQuitMessage(0);
 		break;
 	default:
@@ -201,31 +247,16 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-void DrawTargets(HWND hWnd, HDC hdc) {
-	Gdiplus::Graphics graphics(hdc);
+void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick> bricks) {
+	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
+	screen.Fill(hWnd, hdc, ps, bricks);
 
-	Gdiplus::SolidBrush sBrush(Gdiplus::Color(255, 255, 255, 255));
-	int array[80]{};
-	for (int i = 0; i < SCREEN_HEIGHT * 0.3; i += 22)
-	{
-		for (int k = 10; k < SCREEN_WIDTH - 100; k += 96)
-		{
-			graphics.FillRectangle(&sBrush, Gdiplus::Rect(k, i, 90, 20));
-		}
-	}
+	ball = Ball::Ball();
+	ball.Initialize(1.0f);
+	Drawer::DrawBall(hWnd, ps, hdc, ball);
 
-	isPrepared = true;
-}
+	platform = Platform::Platform();
+	Drawer::DrawPlatform(hWnd, ps, hdc, platform);
 
-void PrepareScreen(HWND hWnd, HDC hdc) {
-	Gdiplus::Graphics graphics(hdc);
-
-	Gdiplus::SolidBrush sBrush(Gdiplus::Color(255, 0, 0, 0));
-	graphics.FillRectangle(&sBrush, Gdiplus::Rect(0, 0, 800, 600));
-	sBrush.SetColor(Gdiplus::Color(255, 255, 255, 255));
-	graphics.FillRectangle(&sBrush, Gdiplus::Rect(350, 450, 120, 20));
-
-	DrawTargets(hWnd, hdc);
-
-	isPrepared = true;
+	isScreenPrepared = true;
 }

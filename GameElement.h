@@ -1,15 +1,13 @@
+#pragma once
+
 class GameElement {
 protected:
-	int sizeX;
-	int sizeY;
-	const int RGB = 3;
+	static const int sizeX = 80;
+	static const int sizeY = 18;
 
 public:
-	GameElement() {
-		sizeX = 35;
-		sizeY = 18;
-	}
+	GameElement() {}
 
-	int getSizeX() const { return sizeX; }
-	int getSizeY() const { return sizeY; }
+	static int getSizeX() { return sizeX; }
+	static int getSizeY() { return sizeY; }
 };

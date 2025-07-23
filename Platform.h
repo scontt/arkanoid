@@ -1,14 +1,21 @@
 #include "GameElement.h"
 
-class Platform : public GameElement {
-public:
-	const static int width = 100;
-	const static int height = 15;
-	const static int hitbox = 5;
+#pragma once
 
-	int x, y;
+class Platform : public GameElement {
+private:
+	static int _width;
+	static int _height;
+	int _x1, _x0, _y;
+
+public:
 
 	Platform();
 	void Move(int x);
-	void Draw();
+
+	int y();
+	int currentX();
+	int lastX();
+	int width();
+	int height();
 };

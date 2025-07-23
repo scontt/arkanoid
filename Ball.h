@@ -1,17 +1,35 @@
 #include "GameElement.h"
+#include "Platform.h"
+#include "Brick.h"
+#include <windows.h>
+#include <stdio.h>
+#include <list>
+
+#pragma once
 
 class Ball : public GameElement {
 private:
-	int ballXsize, ballYsize;
-	float speed = 2.0f;
-	float _x1 = 0, _y1 = 0; // текущие координаты
-	float _x0 = 0, _y0 = 0; // предыдущие координаты
-	float xVector = 0, yVector = 0;
+	int _ballWidth, _ballHeight;
+	int _x1, _y1;
+	int _x0, _y0;
+	float _speed;
+	float xVector, yVector;
 
 public:
 	Ball();
-	void Move();
-	void Initialize(float x0, float y0);
-	bool IsFell(float gameScreenHeight);
-	int Collide(float );
+	RECT Move(int x, int y);
+	void Initialize(float);
+	bool IsFell(int gameScreenHeight);
+	void CheckCollition(Platform platform, std::list<Brick>);
+	void CheckPlatformCollition(Platform platform);
+	void CheckBrickCollition(std::list<Brick> bricks);
+	void CkeckWallsColliton();
+
+	int lastX();
+	int lastY();
+	int currentX();
+	int currentY();
+	int width();
+	int height();
+	float speed();
 };
