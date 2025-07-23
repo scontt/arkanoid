@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <list>
+#include <string>
+#include <iterator>
+
 #include "Ball.h"
 #include "Brick.h"
 #include "Platform.h"
 #include "GameScreen.h"
+#include "HitStates.h"
 
 Ball::Ball() : GameElement() {
 	_ballWidth = sizeX / 3;
@@ -42,13 +46,7 @@ bool Ball::IsFell(int gameScreenHeight) {
 	return _y1 < gameScreenHeight;
 }
 
-void Ball::CheckCollition(Platform platform, std::list<Brick> bricks) {
-	CkeckWallsColliton();
-	CheckPlatformCollition(platform);
-	CheckBrickCollition(bricks);
-}
-
-void Ball::CkeckWallsColliton() {
+void Ball::CheckWallsColliton() {
 	if (_x1 >= GameScreen::width() - width() * 2 || _x1 <= 0) {
 		_x1 -= xVector;
 		_y1 -= yVector;
@@ -65,19 +63,31 @@ void Ball::CheckPlatformCollition(Platform platform) {
 		yVector = -yVector;
 	}
 
-	/*if (_y1 < platform.y() && _y1 > platform.y() + platform.height() && _y1 + height() < platform.y() + platform.height() ||
-		_y1 + height() < platform.y() + height() && _y1 + height() < platform.y() && _y1 < platform.y() &&
-		(_x1 + width() == platform.currentX() || _x1 == platform.currentX() + platform.width())) {
+	if (_y1 <= platform.y() + platform.height() && _y1 + height() >= platform.y() &&
+		((_x1 + width() >= platform.currentX() && platform.currentX() - _x1 <= width() / 3) ||
+		(_x1 <= platform.currentX() + platform.width() && _x1 + width() - platform.currentX() <= width() / 3))) {
+		_x1 = _x0;
+		_y1 = _y0;
 		yVector = -yVector;
 		xVector = -xVector;
-	}*/
+	}
 }
 
-void Ball::CheckBrickCollition(std::list<Brick> bricks) {
-	for (int i = 0; i < bricks.size() / sizeof(Brick); i++)
+bool Ball::CheckBrickCollition(std::list<Brick>& bricks, int vectorSize) {
+	std::list<Brick>::iterator brick;
+	for (brick = bricks.begin(); brick != bricks.end(); brick++)
 	{
-		if (_y1 <= bricks)
+		if ((brick->y() + brick->height() == _y1 || brick->y() == _y1 + height()) && 
+			_x1 < brick->x() + brick->width() && _x1 + width() > brick->x()) {
+			yVector = -yVector;
+			//xVector = -xVector;
+			/*_x1 = _x0;
+			_y1 = _y0;*/
+			bricks.erase(brick);
+			return true;
+		}
 	}
+	return false;
 }
 
 int Ball::lastX() { return _x0; }

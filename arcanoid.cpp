@@ -5,10 +5,13 @@
 #include <gdiplus.h>
 #include <stdio.h>
 #include <chrono>
+#include <string>
 
 #include "GameScreen.h"
 #include "Ball.h"
 #include "Drawer.h"
+#include "HitStates.h"
+#include "Brick.h"
 
 #pragma comment(lib,"gdiplus.lib")
 
@@ -25,16 +28,19 @@ int SCREEN_HEIGHT = 600;
 GameScreen screen;
 Ball ball;
 Platform platform;
+RECT bricksField;
 std::chrono::steady_clock::time_point lastUpdate;
-bool isStarted = false;
 std::list<Brick> bricks;
+bool isStarted = false;
+bool isScreenFilled = false;
+bool isBrickHit;
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>);
+void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>&);
 
 Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 ULONG_PTR gdiplusToken;
@@ -76,6 +82,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
+
+	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	return (int)msg.wParam;
 }
@@ -145,6 +153,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
+		int xBrickCount = SCREEN_WIDTH / Brick::width();
+		int yBrickCount = 9;
+
+		int x = 0;
+		int y = 0;
+
+		for (size_t i = 0; i < yBrickCount; i++)
+		{
+			for (size_t j = 0; j < xBrickCount; j++)
+			{
+				Brick brick = Brick(i, x, y);
+				bricks.push_back(brick);
+				x += Brick::width();
+			}
+			x = 0;
+			y += Brick::height();
+		}
+
+		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
+
 		lastUpdate = std::chrono::steady_clock::now();
 		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 	}
@@ -191,11 +219,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				float deltaTime = std::chrono::duration<float>(now - lastUpdate).count();
 				lastUpdate = now;
 
+				if (!isScreenFilled) {
+					InvalidateRect(hWnd, &bricksField, FALSE);
+				}
+				
 				int newBallPoint = ball.speed() * deltaTime;
 
 				RECT newBall = ball.Move(newBallPoint, newBallPoint);
-				ball.CheckCollition(platform, bricks);
 				InvalidateRect(hWnd, &newBall, FALSE);
+
+				ball.CheckPlatformCollition(platform);
+				ball.CheckWallsColliton();
+				if (ball.CheckBrickCollition(bricks, bricks.size())) {
+					isScreenFilled = false;
+					InvalidateRect(hWnd, &bricksField, FALSE);
+				}
 			}
 		}
 		break;
@@ -208,11 +246,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (!isScreenPrepared)
 			PrepareScreen(hWnd, hdc, ps, bricks);
 
+		if (!isScreenFilled) {
+			screen.Clear(hWnd, hdc, ps, bricksField);
+			screen.Fill(hWnd, hdc, ps, bricks);
+			isScreenFilled = true;
+		}
+
 		Drawer::ErasePlatform(hWnd, ps, hdc, platform);
 		Drawer::DrawPlatform(hWnd, ps, hdc, platform);
 
 		Drawer::EraseBall(hWnd, ps, hdc, ball);
 		Drawer::DrawBall(hWnd, ps, hdc, ball);
+
+		/*if (isBrickHit) {
+			screen.Clear(hWnd, hdc, ps, bricksField);
+			screen.Fill(hWnd, hdc, ps, bricks);
+		}*/
 
 		EndPaint(hWnd, &ps);
 	}
@@ -247,12 +296,12 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick> bricks) {
+void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick>& bricks) {
 	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 	screen.Fill(hWnd, hdc, ps, bricks);
 
 	ball = Ball::Ball();
-	ball.Initialize(1.0f);
+	ball.Initialize(2.0f);
 	Drawer::DrawBall(hWnd, ps, hdc, ball);
 
 	platform = Platform::Platform();

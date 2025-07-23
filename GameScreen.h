@@ -8,16 +8,16 @@
 
 class GameScreen {
 private:
-	static int screenXbrickCount;
-	static int screenYbrickCount;
+	static int _screenXbrickCount;
+	static int _screenYbrickCount;
 
 	static int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 
 public:
 	GameScreen();
 	GameScreen(int width, int height);
-	void Fill(HWND, HDC, PAINTSTRUCT, std::list<Brick> bricks);
-	void Clear();
+	void Fill(HWND, HDC, PAINTSTRUCT, std::list<Brick>& bricks);
+	void Clear(HWND, HDC, PAINTSTRUCT, RECT);
 
 	static int width();
 	static int height();

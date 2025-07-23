@@ -11,7 +11,8 @@ private:
 		_brickLevel;
 public:
 	Brick(int level, int x, int y);
-	bool isHit();
+	bool IsHit();
+	void Kill();
 
 	static int width();
 	static int height();

@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <list>
+#include "HitStates.h"
 
 #pragma once
 
@@ -20,10 +21,9 @@ public:
 	RECT Move(int x, int y);
 	void Initialize(float);
 	bool IsFell(int gameScreenHeight);
-	void CheckCollition(Platform platform, std::list<Brick>);
 	void CheckPlatformCollition(Platform platform);
-	void CheckBrickCollition(std::list<Brick> bricks);
-	void CkeckWallsColliton();
+	bool CheckBrickCollition(std::list<Brick>& bricks, int vectorSize);
+	void CheckWallsColliton();
 
 	int lastX();
 	int lastY();

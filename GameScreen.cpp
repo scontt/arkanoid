@@ -1,12 +1,14 @@
 #include "GameScreen.h"
 #include "Brick.h"
-#include <windows.h>
 #include "Drawer.h"
+
+#include <windows.h>
+#include <iterator>
 
 GameScreen::GameScreen() {}
 
-int GameScreen::screenXbrickCount = 0;
-int GameScreen::screenYbrickCount = 0;
+int GameScreen::_screenXbrickCount = 0;
+int GameScreen::_screenYbrickCount = 0;
 
 int GameScreen::_screenHeight = 0;
 int GameScreen::_screenWidth = 0;
@@ -18,32 +20,36 @@ GameScreen::GameScreen(int width, int height) {
 	GameScreen::_screenWidth = width;
 	int a = Brick::width();
 
-	GameScreen::screenXbrickCount = width / Brick::width();
-	GameScreen::screenYbrickCount = height / Brick::height() / 3;
+	GameScreen::_screenXbrickCount = width / Brick::width();
+	GameScreen::_screenYbrickCount = height / Brick::height() / 3;
 
 	GameScreen::_halfHeight = height / 2;
 	GameScreen::_halfWidth = width / 2;
 }
 
-void GameScreen::Fill(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick> bricks) {
-	int x = 0;
-	int y = 0;
-
-	for (size_t i = 0; i < GameScreen::screenYbrickCount; i++)
+void GameScreen::Fill(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick>& bricks) {
+	std::list<Brick>::iterator brick;
+	for (brick = bricks.begin(); brick != bricks.end(); brick++)
 	{
-		for (size_t j = 0; j < GameScreen::screenXbrickCount; j++)
-		{
-			Brick brick = Brick(i, x, y);
-			Drawer::DrawBrick(hWnd, ps, hdc, brick);
-			bricks.push_back(brick);
-			x += Brick::width();
-		}
-		x = 0;
-		y += Brick::height();
+		Drawer::DrawBrick(hWnd, ps, hdc, brick);
 	}
+}
+
+void GameScreen::Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
+	/*std::list<Brick>::iterator brick;
+	for (brick = bricks.begin(); brick != bricks.end(); brick++)
+	{
+		Drawer::EraseBrick(hWnd, ps, hdc, *brick);
+	}*/
+
+	Drawer::EraseBrick(hWnd, ps, hdc, clearRect);
 }
 
 int GameScreen::width() { return _screenWidth; }
 int GameScreen::height() { return _screenHeight; }
 int GameScreen::halfWidth() { return GameScreen::_halfWidth; }
 int GameScreen::halfHeight() { return GameScreen::_halfHeight; }
+
+
+int x = 0;
+int y = 0;

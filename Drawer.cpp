@@ -1,19 +1,21 @@
-#include "Drawer.h"
 #include <windows.h>
 #include <gdiplus.h>
+#include <string>
+#include <iterator>
 
+#include "Drawer.h"
 #include "Ball.h"
 #include "Brick.h"
 
 #pragma comment(lib, "gdiplus.lib")
 
-void Drawer::DrawBrick(HWND hWnd, PAINTSTRUCT ps, HDC hdc, Brick brick) {
+void Drawer::DrawBrick(HWND hWnd, PAINTSTRUCT ps, HDC hdc, std::list<Brick>::iterator brick) {
 	Gdiplus::Graphics g(hdc);
 	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 0));
-	g.FillRectangle(&brush, brick.x(), brick.y(), brick.width(), brick.height());
+	g.FillRectangle(&brush, brick->x(), brick->y(), brick->width(), brick->height());
 
 	Gdiplus::Pen pen(Gdiplus::Color(255, 255, 255, 255));
-	g.DrawRectangle(&pen, brick.x(), brick.y(), brick.width(), brick.height());
+	g.DrawRectangle(&pen, brick->x(), brick->y(), brick->width(), brick->height());
 }
 
 void Drawer::DrawBall(HWND hWnd, PAINTSTRUCT ps, HDC hdc, Ball ball) {
@@ -44,4 +46,14 @@ void Drawer::EraseBall(HWND hWnd, PAINTSTRUCT ps, HDC hdc, Ball ball) {
 	Gdiplus::Graphics g(hdc);
 	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 255, 255, 255));
 	g.FillRectangle(&brush, ball.lastX(), ball.lastY(), ball.width(), ball.height());
+}
+
+void Drawer::EraseBrick(HWND hWnd, PAINTSTRUCT ps, HDC hdc, RECT clearRect) {
+	Gdiplus::Graphics g(hdc);
+	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 255, 255, 255));
+	int x = clearRect.left;
+	int y = clearRect.top;
+	int width = clearRect.right - clearRect.left;
+	int height = clearRect.bottom - clearRect.top;
+	g.FillRectangle(&brush, x, y, width, height);
 }
