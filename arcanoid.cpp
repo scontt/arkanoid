@@ -10,7 +10,6 @@
 #include "GameScreen.h"
 #include "Ball.h"
 #include "Drawer.h"
-#include "HitStates.h"
 #include "Brick.h"
 
 #pragma comment(lib,"gdiplus.lib")
@@ -25,6 +24,8 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса глав�
 bool isScreenPrepared = false;
 int SCREEN_WIDTH = 800;
 int SCREEN_HEIGHT = 600;
+int xBrickCount = SCREEN_WIDTH / Brick::width();
+int yBrickCount = 9;
 GameScreen screen;
 Ball ball;
 Platform platform;
@@ -41,6 +42,7 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>&);
+void				FillBricksList();
 
 Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 ULONG_PTR gdiplusToken;
@@ -153,26 +155,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
-		int xBrickCount = SCREEN_WIDTH / Brick::width();
-		int yBrickCount = 9;
-
-		int x = 0;
-		int y = 0;
-
-		for (size_t i = 0; i < yBrickCount; i++)
-		{
-			for (size_t j = 0; j < xBrickCount; j++)
-			{
-				Brick brick = Brick(i, x, y);
-				bricks.push_back(brick);
-				x += Brick::width();
-			}
-			x = 0;
-			y += Brick::height();
-		}
-
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
-
+		FillBricksList();
 		lastUpdate = std::chrono::steady_clock::now();
 		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 	}
@@ -232,6 +216,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ball.CheckWallsColliton();
 				if (ball.CheckBrickCollition(bricks, bricks.size())) {
 					isScreenFilled = false;
+					InvalidateRect(hWnd, &bricksField, FALSE);
+				}
+
+				if (ball.IsFell(SCREEN_HEIGHT)) {
+					isScreenPrepared = false;
+					isScreenFilled = false;
+					FillBricksList();
 					InvalidateRect(hWnd, &bricksField, FALSE);
 				}
 			}
@@ -308,4 +299,23 @@ void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick>& bricks)
 	Drawer::DrawPlatform(hWnd, ps, hdc, platform);
 
 	isScreenPrepared = true;
+}
+
+void FillBricksList() {
+	bricks.clear();
+
+	int x = 0;
+	int y = 0;
+
+	for (size_t i = 0; i < yBrickCount; i++)
+	{
+		for (size_t j = 0; j < xBrickCount; j++)
+		{
+			Brick brick = Brick(i, x, y);
+			bricks.push_back(brick);
+			x += Brick::width();
+		}
+		x = 0;
+		y += Brick::height();
+	}
 }

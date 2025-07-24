@@ -1,10 +1,12 @@
 #include "GameElement.h"
 #include "Platform.h"
 #include "Brick.h"
+#include "BallVectorDirection.h"
+#include "PlatformVectorDirection.h"
+
 #include <windows.h>
 #include <stdio.h>
 #include <list>
-#include "HitStates.h"
 
 #pragma once
 
@@ -16,13 +18,15 @@ private:
 	float _speed;
 	float xVector, yVector;
 
+	void ChangeVector(BallVectorDirection, PlatformVectorDirection);
+
 public:
 	Ball();
 	RECT Move(int x, int y);
 	void Initialize(float);
 	bool IsFell(int gameScreenHeight);
 	void CheckPlatformCollition(Platform platform);
-	bool CheckBrickCollition(std::list<Brick>& bricks, int vectorSize);
+	bool CheckBrickCollition(std::list<Brick>& bricks, int);
 	void CheckWallsColliton();
 
 	int lastX();
