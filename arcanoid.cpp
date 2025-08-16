@@ -24,17 +24,12 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса глав�
 bool isScreenPrepared = false;
 int SCREEN_WIDTH = 800;
 int SCREEN_HEIGHT = 600;
-int xBrickCount = SCREEN_WIDTH / Brick::width();
-int yBrickCount = 9;
-GameScreen screen;
-Ball ball;
-Platform platform;
+const int xBrickCount = 10;
+const int yBrickCount = 6;
+GameScreen screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 RECT bricksField;
-std::chrono::steady_clock::time_point lastUpdate;
-std::list<Brick> bricks;
-bool isStarted = false;
-bool isScreenFilled = false;
-bool isBrickHit;
+
+std::vector<Point> tracePoints;
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -82,8 +77,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-
-	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	return (int)msg.wParam;
 }
@@ -147,6 +140,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static DWORD lastTime = GetTickCount();
 	static int newX;
 
 	switch (message)
@@ -157,11 +151,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_KEYDOWN:
 	{
-		isStarted = true;
 	}
 	case WM_MOUSEMOVE:
 	{
-		
+		screen.HandleMouseMove(GET_X_LPARAM(lParam));
 	}
 	break;
 	case WM_COMMAND:
@@ -185,6 +178,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (wParam) {
 		case ID_TIMER1:
+			DWORD currentTime = GetTickCount();
+			float deltaTime = (currentTime - lastTime) / 1000.0f;
+
+			screen.Update(deltaTime, tracePoints);
+
 			break;
 		}
 	}
@@ -192,6 +190,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
+
+		screen.Draw(hdc, ps);
 
 		EndPaint(hWnd, &ps);
 	}

@@ -7,33 +7,31 @@
 #include <windows.h>
 #include <stdio.h>
 #include <list>
+#include <vector>
+#include <gdiplus.h>
+
+#include "Point.h"
 
 #pragma once
 
 class Ball : public GameElement {
 private:
-	int _ballWidth, _ballHeight;
-	int _x1, _y1;
-	int _x0, _y0;
+	int _width, _height;
+	int _x, _y;
+	int _dx, _dy;
+	int _radius;
 	float _speed;
-	float xVector, yVector;
-
-	void ChangeVector(BallVectorDirection, PlatformVectorDirection);
 
 public:
 	Ball();
-	RECT Move(int x, int y);
-	void Initialize(float);
+	Ball(float x, float y, float startSpeed);
+	void Move(float deltaTime);
 	bool IsFell(int gameScreenHeight);
-	void CheckPlatformCollition(Platform platform);
-	bool CheckBrickCollition(std::list<Brick>& bricks, int);
-	void CheckWallsColliton();
 
-	int lastX();
-	int lastY();
-	int currentX();
-	int currentY();
-	int width();
-	int height();
-	float speed();
+	int x() const; int y() const;
+	int dx() const; int dy() const;
+	int radius() const;
+	int width() const;
+	int height() const;
+	float speed() const;
 };

@@ -1,21 +1,23 @@
 #include "GameElement.h"
 
+#include <windows.h>
+
 #pragma once
 
 class Platform : public GameElement {
 private:
-	static int _width;
-	static int _height;
-	int _x1, _x0, _y;
+	int _width = 80;
+	int _height = 10;
+	int _x, _y;
 
 public:
 
-	Platform();
+	Platform(int x, int y);
 	void Move(int x);
+	RECT GetBounds();
 
 	int y();
-	int currentX();
-	int lastX();
+	int x();
 	int width();
 	int height();
 };
