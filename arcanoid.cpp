@@ -41,8 +41,6 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>&);
-void				FillBricksList();
 
 Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 ULONG_PTR gdiplusToken;
@@ -155,9 +153,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
-		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
-		FillBricksList();
-		lastUpdate = std::chrono::steady_clock::now();
 		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 	}
 	case WM_KEYDOWN:
@@ -166,15 +161,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_MOUSEMOVE:
 	{
-		newX = GET_X_LPARAM(lParam);
-
-		platform.Move(newX - platform.width() / 2);
-		RECT oldPlatform = { platform.lastX(), platform.y(), platform.lastX() + platform.width(), platform.y() + platform.height() };
-		RECT newPlatform = { platform.currentX(), platform.y(), platform.currentX() + platform.width(), platform.y() + platform.height() };
-
-		UnionRect(&oldPlatform, &oldPlatform, &newPlatform);
-
-		InvalidateRect(hWnd, &oldPlatform, FALSE);
+		
 	}
 	break;
 	case WM_COMMAND:
@@ -198,61 +185,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (wParam) {
 		case ID_TIMER1:
-			if (isStarted) {
-				auto now = std::chrono::steady_clock::now();
-				float deltaTime = std::chrono::duration<float>(now - lastUpdate).count();
-				lastUpdate = now;
-
-				if (!isScreenFilled) {
-					InvalidateRect(hWnd, &bricksField, FALSE);
-				}
-				
-				int newBallPoint = ball.speed() * deltaTime;
-
-				RECT newBall = ball.Move(newBallPoint, newBallPoint);
-				InvalidateRect(hWnd, &newBall, FALSE);
-
-				ball.CheckPlatformCollition(platform);
-				ball.CheckWallsColliton();
-				if (ball.CheckBrickCollition(bricks, bricks.size())) {
-					isScreenFilled = false;
-					InvalidateRect(hWnd, &bricksField, FALSE);
-				}
-
-				if (ball.IsFell(SCREEN_HEIGHT)) {
-					isScreenPrepared = false;
-					isScreenFilled = false;
-					FillBricksList();
-					InvalidateRect(hWnd, &bricksField, FALSE);
-				}
-			}
+			break;
 		}
-		break;
 	}
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
-
-		if (!isScreenPrepared)
-			PrepareScreen(hWnd, hdc, ps, bricks);
-
-		if (!isScreenFilled) {
-			screen.Clear(hWnd, hdc, ps, bricksField);
-			screen.Fill(hWnd, hdc, ps, bricks);
-			isScreenFilled = true;
-		}
-
-		Drawer::ErasePlatform(hWnd, ps, hdc, platform);
-		Drawer::DrawPlatform(hWnd, ps, hdc, platform);
-
-		Drawer::EraseBall(hWnd, ps, hdc, ball);
-		Drawer::DrawBall(hWnd, ps, hdc, ball);
-
-		/*if (isBrickHit) {
-			screen.Clear(hWnd, hdc, ps, bricksField);
-			screen.Fill(hWnd, hdc, ps, bricks);
-		}*/
 
 		EndPaint(hWnd, &ps);
 	}
@@ -285,37 +224,4 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	return (INT_PTR)FALSE;
-}
-
-void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick>& bricks) {
-	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
-	screen.Fill(hWnd, hdc, ps, bricks);
-
-	ball = Ball::Ball();
-	ball.Initialize(2.0f);
-	Drawer::DrawBall(hWnd, ps, hdc, ball);
-
-	platform = Platform::Platform();
-	Drawer::DrawPlatform(hWnd, ps, hdc, platform);
-
-	isScreenPrepared = true;
-}
-
-void FillBricksList() {
-	bricks.clear();
-
-	int x = 0;
-	int y = 0;
-
-	for (size_t i = 0; i < yBrickCount; i++)
-	{
-		for (size_t j = 0; j < xBrickCount; j++)
-		{
-			Brick brick = Brick(i, x, y);
-			bricks.push_back(brick);
-			x += Brick::width();
-		}
-		x = 0;
-		y += Brick::height();
-	}
 }
