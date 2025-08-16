@@ -3,36 +3,52 @@
 #include "Drawer.h"
 
 #include <windows.h>
+#include <windowsx.h>
 #include <iterator>
 
-GameScreen::GameScreen() {}
-
-int GameScreen::_screenXbrickCount = 0;
-int GameScreen::_screenYbrickCount = 0;
-
-int GameScreen::_screenHeight = 0;
-int GameScreen::_screenWidth = 0;
-int GameScreen::_halfHeight;
-int GameScreen::_halfWidth;
-
 GameScreen::GameScreen(int width, int height) {
-	GameScreen::_screenHeight = height;
-	GameScreen::_screenWidth = width;
-	int a = Brick::width();
+	_screenHeight = height;
+	_screenWidth = width;
 
-	GameScreen::_screenXbrickCount = width / Brick::width();
-	GameScreen::_screenYbrickCount = height / Brick::height() / 3;
-
-	GameScreen::_halfHeight = height / 2;
-	GameScreen::_halfWidth = width / 2;
+	_halfHeight = height / 2;
+	_halfWidth = width / 2;
 }
 
-void GameScreen::Fill(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick>& bricks) {
-	std::list<Brick>::iterator brick;
-	for (brick = bricks.begin(); brick != bricks.end(); brick++)
+void GameScreen::Initialize() {
+	for (size_t i = 0; i < _yBrickCount; i++)
 	{
-		Drawer::DrawBrick(hWnd, ps, hdc, brick);
+		for (size_t j = 0; j < _xBrickCount; j++)
+		{
+			Brick brick = Brick(x, y);
+			_bricks[i][j] = Brick(x, y);
+			x += Brick::width();
+		}
+		x = 0;
+		y += Brick::height();
 	}
+
+	_ball = Ball(10, 10, 2.0f);
+	_platform = Platform(_halfWidth, _halfHeight);
+}
+
+void GameScreen::Fill(HDC hdc, PAINTSTRUCT ps) {
+	for (int i = 0; i < _yBrickCount; i++)
+	{
+		for (int j = 0; j < _xBrickCount; j++)
+		{
+			Drawer::DrawBrick(hdc, &_bricks[i][j]);
+		}
+	}
+
+	Drawer::DrawBall(hdc, _ball);
+	Drawer::DrawPlatform(hdc, _platform);
+}
+
+void GameScreen::Update(float deltaTime) {
+	_ball.Move(deltaTime);
+	_platform.Move(_platformNewX);
+
+	CheckCollisions();
 }
 
 void GameScreen::Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
@@ -42,13 +58,40 @@ void GameScreen::Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
 		Drawer::EraseBrick(hWnd, ps, hdc, *brick);
 	}*/
 
-	Drawer::EraseBrick(hWnd, ps, hdc, clearRect);
+	Drawer::EraseBrick(hdc, clearRect);
 }
 
-int GameScreen::width() { return _screenWidth; }
-int GameScreen::height() { return _screenHeight; }
-int GameScreen::halfWidth() { return GameScreen::_halfWidth; }
-int GameScreen::halfHeight() { return GameScreen::_halfHeight; }
+void GameScreen::CheckCollisions() {
+	RECT ballBounds = _ball.GetBounds();
+	RECT intersectRect;
+
+	if (_ball.GetX() - _ball.radius() <= 0 || _ball.GetX() + _ball.radius() >= _screenWidth) _ball.ReverseX();
+	if (_ball.GetY() - _ball.radius() <= 0) _ball.ReverseY();
+	if (_ball.GetY() + _ball.radius() >= _screenHeight) _ball.ReverseY();
+
+	if (IntersectRect(&intersectRect, &ballBounds, &_platform.GetBounds())) {
+		_ball.ReverseY();
+	}
+
+	for (int i = 0; i < _yBrickCount; ++i) {
+		for (int j = 0; j < _xBrickCount; ++j) {
+			if (!_bricks[i][j].isDestroyed() && IntersectRect(&intersectRect, &ballBounds, &_bricks[i][j].GetBounds())) {
+				_bricks[i][j].Destroy();
+				_ball.ReverseY();
+			}
+		}
+	}
+}
+
+void GameScreen::HandleMouseMove(LPARAM key) {
+	_platformNewX = GET_X_LPARAM(key);
+}
+
+
+int GameScreen::width() const { return this->_screenWidth; }
+int GameScreen::height() const { return this->_screenHeight; }
+int GameScreen::halfWidth() const { return this->_halfWidth; }
+int GameScreen::halfHeight() const { return this->_halfHeight; }
 
 
 int x = 0;

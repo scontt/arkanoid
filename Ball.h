@@ -7,33 +7,54 @@
 #include <windows.h>
 #include <stdio.h>
 #include <list>
+#include <vector>
+#include <gdiplus.h>
+
+#include "Point.h"
 
 #pragma once
 
 class Ball : public GameElement {
 private:
-	int _ballWidth, _ballHeight;
-	int _x1, _y1;
-	int _x0, _y0;
+	int _width, _height;
+	int _x, _y;
+	int _dx, _dy;
+	int _radius;
 	float _speed;
 	float xVector, yVector;
+
+	const int TRAIL_LENGTH = 5;
 
 	void ChangeVector(BallVectorDirection, PlatformVectorDirection);
 
 public:
 	Ball();
-	RECT Move(int x, int y);
-	void Initialize(float);
-	bool IsFell(int gameScreenHeight);
-	void CheckPlatformCollition(Platform platform);
-	bool CheckBrickCollition(std::list<Brick>& bricks, int);
-	void CheckWallsColliton();
+	Ball(float x, float y, float startSpeed);
 
-	int lastX();
-	int lastY();
-	int currentX();
-	int currentY();
-	int width();
-	int height();
-	float speed();
+	std::vector<Point> trail;
+
+	bool IsFell(int gameScreenHeight);
+	bool CheckBrickCollition(std::list<Brick>& bricks, int);
+
+	void Move(float deltaTime);
+	void CheckPlatformCollition(Platform platform);
+	void ReverseX();
+	void ReverseY();
+	RECT GetBounds();
+
+	int GetX() const; int GetY() const;
+	int GetDX() const; int GetDY() const;
+	int radius() const;
+	int width() const;
+	int height() const;
+	float speed() const;
+
+	Ball operator=(const Ball& other) {
+		if (this != &other) {
+			_x = other._x;
+			_y = other._y;
+			_speed = other._speed;
+		}
+		return *this;
+	}
 };

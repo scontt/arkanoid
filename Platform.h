@@ -9,9 +9,10 @@ private:
 	int _x1, _x0, _y;
 
 public:
-
-	Platform();
+	Platform() {}
+	Platform(int x, int y);
 	void Move(int x);
+	RECT GetBounds();
 
 	int y();
 	int currentX();

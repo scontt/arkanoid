@@ -1,37 +1,43 @@
 #include "Brick.h"
 #include "Ball.h"
+
 #include <string>
 
-int Brick::_brickHeight = GameElement::sizeY;
-int Brick::_brickWidth = GameElement::sizeX;
+int Brick::_height = GameElement::sizeY;
+int Brick::_width = GameElement::sizeX;
 
-Brick::Brick(int level, int x, int y) : GameElement() {
-	_brickXcoordinate = x;
-	_brickYcoordinate = y;
-	_brickLevel = level;
+Brick::Brick() {}
+
+Brick::Brick(int x, int y) : GameElement() {
+	_x = x;
+	_y = y;
 	unsigned int color[3] = { 255, 255, 255 };
 }
 
-bool Brick::IsHit() {
-	return false;
+RECT Brick::GetBounds() {
+	return RECT{ _x, _y, _width, _height };
 }
 
-void Brick::Kill() {
-	(_brickXcoordinate, _brickYcoordinate) = 0;
+void Brick::Destroy() {
+	_isDestroyed = true;
+}
+
+bool Brick::isDestroyed() {
+	return _isDestroyed;
 }
 
 int Brick::height() {
-	return _brickHeight;
+	return _height;
 }
 
 int Brick::width() {
-	return _brickWidth;
+	return _width;
 }
 
 int Brick::x() {
-	return _brickXcoordinate;
+	return _x;
 }
 
 int Brick::y() {
-	return _brickYcoordinate;
+	return _y;
 }

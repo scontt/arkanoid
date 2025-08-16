@@ -1,74 +1,57 @@
 #include <stdio.h>
-#include <list>
 #include <string>
-#include <iterator>
 #include <cstdlib>
+#include <gdiplus.h>
 
 #include "Ball.h"
+#include "Point.h"
 #include "Brick.h"
 #include "Platform.h"
 #include "GameScreen.h"
 #include "BallVectorDirection.h"
 #include "PlatformVectorDirection.h"
 
-Ball::Ball() : GameElement() {
-	_ballWidth = sizeX / 3;
-	_ballHeight = sizeY;
-}
+#pragma comment(lib,"gdiplus.lib")
 
-RECT Ball::Move(int x, int y) {
-	_x0 = _x1;
-	_y0 = _y1;
+Ball::Ball() {}
 
-	_x1 += xVector;
-	_y1 += yVector;
+Ball::Ball(float x, float y, float startSpeed) : GameElement() {
+	_width = sizeY;
+	_height = sizeY;
 
-	RECT oldBall = { _x0, _y0, _x0 + width(), _y0 + height() };
-	RECT newBall = { _x1, _y1, _x1 + width(), _y1 + height() };
-	UnionRect(&oldBall, &oldBall, &newBall);
-	return oldBall;
-}
-
-void Ball::Initialize(float startSpeed) {
-	_x0 = GameScreen::halfWidth() - Ball::width() / 2;
-	_y0 = GameScreen::height() - 200;
-	_x1 = _x0;
-	_y1 = _y0;
-
-	_ballWidth = sizeY;
-	_ballHeight = sizeY;
+	_x = x;
+	_y = y;
 
 	_speed = startSpeed;
-
-	xVector = _speed;
-	yVector = _speed;
 }
+
+void Ball::Move(float deltaTime) {
+	_x += _dx * deltaTime;
+	_y += _dy * deltaTime;
+	
+	trail.push_back(Point(_x, _y));
+	if (trail.size() > TRAIL_LENGTH) trail.erase(trail.begin());
+}
+
+//void Ball::Initialize(float startSpeed) {
+//	xVector = _speed;
+//	yVector = _speed;
+//}
 
 bool Ball::IsFell(int gameScreenHeight) {
-	return _y1 + width() > gameScreenHeight;
-}
-
-void Ball::CheckWallsColliton() {
-	if (_x1 >= GameScreen::width() - width() * 2 || _x1 <= 0) {
-		_x1 -= xVector;
-		_y1 -= yVector;
-		xVector = -xVector;
-	}
-	if (_y1 <= 0) {
-		yVector = -yVector;
-	}
+	return _y + width() > gameScreenHeight;
 }
 
 void Ball::CheckPlatformCollition(Platform platform) {
-	if (_y1 + height() == platform.y() &&
-		_x1 + width() >= platform.currentX() && _x1 <= platform.currentX() + platform.width()) {
+	if (_y + height() == platform.y() &&
+		_x + width() >= platform.currentX() && _x <= platform.currentX() + platform.width()) {
 		yVector = -yVector;
 	}
 
 
-	if (_y1 <= platform.y() + platform.height() && _y1 + height() >= platform.y() + 1) {
+	if (_y <= platform.y() + platform.height() && _y + height() >= platform.y() + 1) {
 
-		if (_x1 + width() >= platform.currentX() && std::abs(platform.currentX() - _x1) <= width()) {
+		if (_x + width() >= platform.currentX() && std::abs(platform.currentX() - _x) <= width()) {
 
 			if (xVector > 0)
 				ChangeVector(BallVectorDirection::left, PlatformVectorDirection::right);
@@ -76,7 +59,7 @@ void Ball::CheckPlatformCollition(Platform platform) {
 				ChangeVector(BallVectorDirection::right, PlatformVectorDirection::right);
 		}
 
-		if (_x1 <= platform.currentX() + platform.width() && std::abs((_x1 + width()) - (platform.currentX() + platform.width())) <= width()) {
+		if (_x <= platform.currentX() + platform.width() && std::abs((_x + width()) - (platform.currentX() + platform.width())) <= width()) {
 			
 			if (xVector < 0)
 				ChangeVector(BallVectorDirection::right, PlatformVectorDirection::left);
@@ -86,25 +69,32 @@ void Ball::CheckPlatformCollition(Platform platform) {
 	}
 }
 
-void Ball::ChangeVector(BallVectorDirection bDirection, PlatformVectorDirection pDirection) {
-	yVector *= -1.0f;
-
-	if (bDirection == BallVectorDirection::right && pDirection == PlatformVectorDirection::left ||
-		bDirection == BallVectorDirection::left && pDirection == PlatformVectorDirection::right) {
-		_x1 = _x0;
-		_y1 = _y0;
-		xVector *= -1.0f;
-	}
-
+RECT Ball::GetBounds() {
+	return RECT { _x - _radius, _y - _radius, _radius * 2, _radius * 2 };
 }
+
+void Ball::ReverseX() { _dx = -_dx; }
+void Ball::ReverseY() { _dy = -_dy; }
+
+//void Ball::ChangeVector(BallVectorDirection bDirection, PlatformVectorDirection pDirection) {
+//	yVector *= -1.0f;
+//
+//	if (bDirection == BallVectorDirection::right && pDirection == PlatformVectorDirection::left ||
+//		bDirection == BallVectorDirection::left && pDirection == PlatformVectorDirection::right) {
+//		_x1 = _x0;
+//		_y1 = _y0;
+//		xVector *= -1.0f;
+//	}
+//
+//}
 
 bool Ball::CheckBrickCollition(std::list<Brick>& bricks, int vectorSize) {
 	std::list<Brick>::iterator brick;
 	for (brick = bricks.begin(); brick != bricks.end(); brick++)
 	{
-		if (_y1 <= brick->y() + brick->height() - 1 && _y1 + height() >= brick->y() + 1 &&
-			(_x1 + width() >= brick->x() && std::abs(brick->x() - _x1) <= 2 ||
-				(_x1 <= brick->x() + brick->width() && std::abs((_x1 + width()) - (brick->x() + brick->width())) <= 2))) {
+		if (_y <= brick->y() + brick->height() - 1 && _y + height() >= brick->y() + 1 &&
+			(_x + width() >= brick->x() && std::abs(brick->x() - _x) <= 2 ||
+				(_x <= brick->x() + brick->width() && std::abs((_x + width()) - (brick->x() + brick->width())) <= 2))) {
 
 			xVector = -xVector;
 
@@ -112,8 +102,8 @@ bool Ball::CheckBrickCollition(std::list<Brick>& bricks, int vectorSize) {
 			return true;
 		}
 
-		if ((brick->y() + brick->height() == _y1 || brick->y() == _y1 + height()) &&
-			_x1 < brick->x() + brick->width() && _x1 + width() > brick->x()) {
+		if ((brick->y() + brick->height() == _y || brick->y() == _y + height()) &&
+			_x < brick->x() + brick->width() && _x + width() > brick->x()) {
 
 			yVector = -yVector;
 			
@@ -124,13 +114,13 @@ bool Ball::CheckBrickCollition(std::list<Brick>& bricks, int vectorSize) {
 	return false;
 }
 
-int Ball::lastX() { return _x0; }
-int Ball::lastY() { return _y0; }
+int Ball::GetX() const { return _x; }
+int Ball::GetY() const { return _y; }
+int Ball::GetDX() const { return _dx; }
+int Ball::GetDY() const { return _dy; }
 
-int Ball::currentX() { return _x1; }
-int Ball::currentY() { return _y1; }
+int Ball::radius() const { return _radius; }
+int Ball::width() const { return _width; }
+int Ball::height() const { return _height; }
 
-int Ball::width() { return _ballWidth; }
-int Ball::height() { return _ballHeight; }
-
-float Ball::speed() { return _speed; }
+float Ball::speed() const { return _speed; }

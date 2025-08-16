@@ -24,14 +24,12 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса глав�
 bool isScreenPrepared = false;
 int SCREEN_WIDTH = 800;
 int SCREEN_HEIGHT = 600;
-int xBrickCount = SCREEN_WIDTH / Brick::width();
-int yBrickCount = 9;
+const int xBrickCount = 10;
+const int yBrickCount = 6;
 GameScreen screen;
-Ball ball;
-Platform platform;
 RECT bricksField;
 std::chrono::steady_clock::time_point lastUpdate;
-std::list<Brick> bricks;
+
 bool isStarted = false;
 bool isScreenFilled = false;
 bool isBrickHit;
@@ -150,6 +148,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static int newX;
+	static DWORD lastTime = GetTickCount();
 
 	switch (message)
 	{
@@ -168,13 +167,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		newX = GET_X_LPARAM(lParam);
 
-		platform.Move(newX - platform.width() / 2);
+
+
+		/*platform.Move(newX - platform.width() / 2);
 		RECT oldPlatform = { platform.lastX(), platform.y(), platform.lastX() + platform.width(), platform.y() + platform.height() };
 		RECT newPlatform = { platform.currentX(), platform.y(), platform.currentX() + platform.width(), platform.y() + platform.height() };
 
 		UnionRect(&oldPlatform, &oldPlatform, &newPlatform);
 
-		InvalidateRect(hWnd, &oldPlatform, FALSE);
+		InvalidateRect(hWnd, &oldPlatform, FALSE);*/
 	}
 	break;
 	case WM_COMMAND:
@@ -199,32 +200,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wParam) {
 		case ID_TIMER1:
 			if (isStarted) {
-				auto now = std::chrono::steady_clock::now();
-				float deltaTime = std::chrono::duration<float>(now - lastUpdate).count();
-				lastUpdate = now;
-
-				if (!isScreenFilled) {
-					InvalidateRect(hWnd, &bricksField, FALSE);
-				}
-				
-				int newBallPoint = ball.speed() * deltaTime;
-
-				RECT newBall = ball.Move(newBallPoint, newBallPoint);
-				InvalidateRect(hWnd, &newBall, FALSE);
-
-				ball.CheckPlatformCollition(platform);
-				ball.CheckWallsColliton();
-				if (ball.CheckBrickCollition(bricks, bricks.size())) {
-					isScreenFilled = false;
-					InvalidateRect(hWnd, &bricksField, FALSE);
-				}
-
-				if (ball.IsFell(SCREEN_HEIGHT)) {
-					isScreenPrepared = false;
-					isScreenFilled = false;
-					FillBricksList();
-					InvalidateRect(hWnd, &bricksField, FALSE);
-				}
+				DWORD currentTime = GetTickCount();
+				float deltaTime = (currentTime - lastTime) / 1000.0f;
+				lastTime = currentTime;
 			}
 		}
 		break;
@@ -234,25 +212,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 
-		if (!isScreenPrepared)
-			PrepareScreen(hWnd, hdc, ps, bricks);
-
-		if (!isScreenFilled) {
-			screen.Clear(hWnd, hdc, ps, bricksField);
-			screen.Fill(hWnd, hdc, ps, bricks);
-			isScreenFilled = true;
-		}
-
-		Drawer::ErasePlatform(hWnd, ps, hdc, platform);
-		Drawer::DrawPlatform(hWnd, ps, hdc, platform);
-
-		Drawer::EraseBall(hWnd, ps, hdc, ball);
-		Drawer::DrawBall(hWnd, ps, hdc, ball);
-
-		/*if (isBrickHit) {
-			screen.Clear(hWnd, hdc, ps, bricksField);
-			screen.Fill(hWnd, hdc, ps, bricks);
-		}*/
+		
 
 		EndPaint(hWnd, &ps);
 	}
@@ -287,23 +247,21 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps, std::list<Brick>& bricks) {
+void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps,  bricks) {
 	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
-	screen.Fill(hWnd, hdc, ps, bricks);
+	screen.Fill(ps, bricks);
 
 	ball = Ball::Ball();
 	ball.Initialize(2.0f);
-	Drawer::DrawBall(hWnd, ps, hdc, ball);
+	Drawer::DrawBall(hdc, ball);
 
 	platform = Platform::Platform();
-	Drawer::DrawPlatform(hWnd, ps, hdc, platform);
+	Drawer::DrawPlatform(hdc, platform);
 
 	isScreenPrepared = true;
 }
 
 void FillBricksList() {
-	bricks.clear();
-
 	int x = 0;
 	int y = 0;
 
@@ -311,7 +269,7 @@ void FillBricksList() {
 	{
 		for (size_t j = 0; j < xBrickCount; j++)
 		{
-			Brick brick = Brick(i, x, y);
+			Brick brick = Brick(x, y);
 			bricks.push_back(brick);
 			x += Brick::width();
 		}

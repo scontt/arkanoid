@@ -2,25 +2,32 @@
 #include <windows.h>
 #include <stdio.h>
 #include "Brick.h"
-#include <list>
+#include "Ball.h"
 
 #pragma once
 
 class GameScreen {
 private:
-	static int _screenXbrickCount;
-	static int _screenYbrickCount;
+	static const int _xBrickCount = 10;
+	static const int _yBrickCount = 6;
+	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
+	int _platformNewX;
 
-	static int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
+	Brick _bricks[_yBrickCount][_xBrickCount];
+	Ball _ball;
+	Platform _platform;
 
 public:
-	GameScreen();
 	GameScreen(int width, int height);
-	void Fill(HWND, HDC, PAINTSTRUCT, std::list<Brick>& bricks);
+	void Initialize();
+	void Fill(HDC, PAINTSTRUCT);
+	void Update(float deltaTime);
 	void Clear(HWND, HDC, PAINTSTRUCT, RECT);
+	void HandleMouseMove(LPARAM);
+	void CheckCollisions();
 
-	static int width();
-	static int height();
-	static int halfWidth();
-	static int halfHeight();
+	int width() const;
+	int height() const;
+	int halfWidth() const;
+	int halfHeight() const;
 };
