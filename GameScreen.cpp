@@ -2,9 +2,15 @@
 #include "Brick.h"
 #include "Drawer.h"
 
+#include <vector>
 #include <windows.h>
 #include <windowsx.h>
 #include <iterator>
+#include <math.h>
+
+std::vector<Point> tracePoints;
+
+GameScreen::GameScreen() {}
 
 GameScreen::GameScreen(int width, int height) {
 	_screenHeight = height;
@@ -15,6 +21,9 @@ GameScreen::GameScreen(int width, int height) {
 }
 
 void GameScreen::Initialize() {
+	int x = 0;
+	int y = 0;
+
 	for (size_t i = 0; i < _yBrickCount; i++)
 	{
 		for (size_t j = 0; j < _xBrickCount; j++)
@@ -44,43 +53,50 @@ void GameScreen::Fill(HDC hdc, PAINTSTRUCT ps) {
 	Drawer::DrawPlatform(hdc, _platform);
 }
 
-void GameScreen::Update(float deltaTime) {
+void GameScreen::Update(float deltaTime, std::vector<Point> &points) {
 	_ball.Move(deltaTime);
-	_platform.Move(_platformNewX);
+	_platform.Move(_platformNewX - _platform.width() / 2);
 
-	CheckCollisions();
+	CheckCollisions(deltaTime, points);
 }
 
 void GameScreen::Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
-	/*std::list<Brick>::iterator brick;
-	for (brick = bricks.begin(); brick != bricks.end(); brick++)
-	{
-		Drawer::EraseBrick(hWnd, ps, hdc, *brick);
-	}*/
-
 	Drawer::EraseBrick(hdc, clearRect);
 }
 
-void GameScreen::CheckCollisions() {
+void GameScreen::CheckCollisions(float &deltaTime, std::vector<Point> &points) {
 	RECT ballBounds = _ball.GetBounds();
 	RECT intersectRect;
 
-	if (_ball.GetX() - _ball.radius() <= 0 || _ball.GetX() + _ball.radius() >= _screenWidth) _ball.ReverseX();
-	if (_ball.GetY() - _ball.radius() <= 0) _ball.ReverseY();
-	if (_ball.GetY() + _ball.radius() >= _screenHeight) _ball.ReverseY();
+	double len = sqrt(_ball.GetDX() * deltaTime * _ball.GetDX() * deltaTime + _ball.GetDY() * deltaTime * _ball.GetDY() * deltaTime);
 
-	if (IntersectRect(&intersectRect, &ballBounds, &_platform.GetBounds())) {
-		_ball.ReverseY();
-	}
+	double x = (double)_ball.GetX();
+	double y = (double)_ball.GetY();
+	double dx = _ball.GetDX() * deltaTime / len;
+	double dy = _ball.GetDY() * deltaTime / len;
 
-	for (int i = 0; i < _yBrickCount; ++i) {
-		for (int j = 0; j < _xBrickCount; ++j) {
-			if (!_bricks[i][j].isDestroyed() && IntersectRect(&intersectRect, &ballBounds, &_bricks[i][j].GetBounds())) {
-				_bricks[i][j].Destroy();
-				_ball.ReverseY();
+	for (int k = 0; k < len; k++) {
+		for (int i = 0; i < _yBrickCount; ++i) {
+			for (int j = 0; j < _xBrickCount; ++j) {
+
+				if (!_bricks[i][j].isDestroyed() && IntersectPoint(x, y, _bricks[i][j].GetBounds())) {
+					_bricks[i][j].Destroy();
+					dy *= -1;
+				}
+				x += dx;
+				y += dy;
+
+				//tracePoints
+				//points.push_back(Point(x, y));
+
 			}
 		}
 	}
+}
+
+bool GameScreen::IntersectPoint(double x, double y, RECT rectBounds) {
+	return (x >= rectBounds.left && x < rectBounds.right &&
+		y >= rectBounds.top && y < rectBounds.bottom);	
 }
 
 void GameScreen::HandleMouseMove(LPARAM key) {
@@ -92,7 +108,3 @@ int GameScreen::width() const { return this->_screenWidth; }
 int GameScreen::height() const { return this->_screenHeight; }
 int GameScreen::halfWidth() const { return this->_halfWidth; }
 int GameScreen::halfHeight() const { return this->_halfHeight; }
-
-
-int x = 0;
-int y = 0;

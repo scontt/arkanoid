@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <string>
+#include <vector>
 
 #include "GameScreen.h"
 #include "Ball.h"
@@ -30,6 +31,8 @@ GameScreen screen;
 RECT bricksField;
 std::chrono::steady_clock::time_point lastUpdate;
 
+std::vector<Point> tracePoints;
+
 bool isStarted = false;
 bool isScreenFilled = false;
 bool isBrickHit;
@@ -40,7 +43,6 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>&);
-void				FillBricksList();
 
 Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 ULONG_PTR gdiplusToken;
@@ -155,7 +157,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
-		FillBricksList();
 		lastUpdate = std::chrono::steady_clock::now();
 		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 	}
@@ -165,17 +166,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_MOUSEMOVE:
 	{
-		newX = GET_X_LPARAM(lParam);
-
-
-
-		/*platform.Move(newX - platform.width() / 2);
-		RECT oldPlatform = { platform.lastX(), platform.y(), platform.lastX() + platform.width(), platform.y() + platform.height() };
-		RECT newPlatform = { platform.currentX(), platform.y(), platform.currentX() + platform.width(), platform.y() + platform.height() };
-
-		UnionRect(&oldPlatform, &oldPlatform, &newPlatform);
-
-		InvalidateRect(hWnd, &oldPlatform, FALSE);*/
+		screen.HandleMouseMove(GET_X_LPARAM(lParam));
 	}
 	break;
 	case WM_COMMAND:
@@ -203,6 +194,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DWORD currentTime = GetTickCount();
 				float deltaTime = (currentTime - lastTime) / 1000.0f;
 				lastTime = currentTime;
+				screen.CheckCollisions(deltaTime, tracePoints);
 			}
 		}
 		break;
@@ -211,8 +203,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
-
-		
 
 		EndPaint(hWnd, &ps);
 	}
@@ -245,35 +235,4 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	return (INT_PTR)FALSE;
-}
-
-void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps,  bricks) {
-	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
-	screen.Fill(ps, bricks);
-
-	ball = Ball::Ball();
-	ball.Initialize(2.0f);
-	Drawer::DrawBall(hdc, ball);
-
-	platform = Platform::Platform();
-	Drawer::DrawPlatform(hdc, platform);
-
-	isScreenPrepared = true;
-}
-
-void FillBricksList() {
-	int x = 0;
-	int y = 0;
-
-	for (size_t i = 0; i < yBrickCount; i++)
-	{
-		for (size_t j = 0; j < xBrickCount; j++)
-		{
-			Brick brick = Brick(x, y);
-			bricks.push_back(brick);
-			x += Brick::width();
-		}
-		x = 0;
-		y += Brick::height();
-	}
 }

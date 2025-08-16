@@ -1,6 +1,6 @@
 #include "Brick.h"
-#include "Ball.h"
 
+#include <windows.h>
 #include <string>
 
 int Brick::_height = GameElement::sizeY;

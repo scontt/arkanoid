@@ -10,6 +10,7 @@ class GameScreen {
 private:
 	static const int _xBrickCount = 10;
 	static const int _yBrickCount = 6;
+	
 	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 	int _platformNewX;
 
@@ -18,13 +19,15 @@ private:
 	Platform _platform;
 
 public:
+	GameScreen();
 	GameScreen(int width, int height);
 	void Initialize();
 	void Fill(HDC, PAINTSTRUCT);
-	void Update(float deltaTime);
+	void Update(float deltaTime, std::vector<Point>& points);
 	void Clear(HWND, HDC, PAINTSTRUCT, RECT);
 	void HandleMouseMove(LPARAM);
-	void CheckCollisions();
+	void CheckCollisions(float &deltaTime, std::vector<Point>& points);
+	bool IntersectPoint(double x, double y, RECT rectBounds);
 
 	int width() const;
 	int height() const;

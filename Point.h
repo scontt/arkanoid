@@ -2,7 +2,10 @@
 
 class Point {
 public:
-	Point(int x, int y);
+	Point(int x, int y) {
+		X = x;
+		Y = y;
+	}
 
 	int X;
 	int Y;

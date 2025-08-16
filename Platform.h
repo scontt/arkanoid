@@ -4,19 +4,18 @@
 
 class Platform : public GameElement {
 private:
-	static int _width;
-	static int _height;
-	int _x1, _x0, _y;
+	int _width = 80;
+	int _height = 10;
+	int _x = 0, _y = 0;
 
 public:
-	Platform() {}
+	Platform();
 	Platform(int x, int y);
 	void Move(int x);
 	RECT GetBounds();
 
-	int y();
-	int currentX();
-	int lastX();
+	int getY();
+	int getX();
 	int width();
 	int height();
 };

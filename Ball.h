@@ -25,8 +25,6 @@ private:
 
 	const int TRAIL_LENGTH = 5;
 
-	void ChangeVector(BallVectorDirection, PlatformVectorDirection);
-
 public:
 	Ball();
 	Ball(float x, float y, float startSpeed);
@@ -37,9 +35,6 @@ public:
 	bool CheckBrickCollition(std::list<Brick>& bricks, int);
 
 	void Move(float deltaTime);
-	void CheckPlatformCollition(Platform platform);
-	void ReverseX();
-	void ReverseY();
 	RECT GetBounds();
 
 	int GetX() const; int GetY() const;
