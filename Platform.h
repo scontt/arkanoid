@@ -9,8 +9,6 @@ private:
 	int _x1, _x0, _y;
 
 public:
-	Platform() {}
-
 	Platform(int x, int y) : GameElement() {
 		_x0 = _x1 = x;
 		_y = y;

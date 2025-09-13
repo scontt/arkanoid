@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "Brick.h"
 #include "Ball.h"
+#include "Drawer.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -12,63 +13,67 @@
 class GameScreen {
 private:
 	static const int _xBrickCount = 10;
-	static const int _yBrickCount = 6;
+	static const int _yBrickCount = 10;
 	int x = 0;
 	int y = 0;
 	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 	int _platformNewX;
 
-	Brick _bricks[_yBrickCount][_xBrickCount];
-	Ball _ball;
-	Platform _platform;
+	Brick* _bricks[_yBrickCount][_xBrickCount];
+	Ball* _ball;
+	Platform* _platform;
 
 public:
-	GameScreen() {}
-
 	GameScreen(int width, int height) {
 		_screenHeight = height;
 		_screenWidth = width;
 
 		_halfHeight = height / 2;
 		_halfWidth = width / 2;
+
+		_ball = new Ball(10, 10, 2.0f);
+		_platform = new Platform(_halfWidth, _halfHeight);
+		FillBricks();
 	}
 
-	void Initialize() {
+	void FillBricks() {
 		for (size_t i = 0; i < _yBrickCount; i++)
 		{
 			for (size_t j = 0; j < _xBrickCount; j++)
 			{
 				Brick brick = Brick(x, y);
-				_bricks[i][j] = Brick(x, y);
+				_bricks[i][j] = new Brick(x, y);
 				x += Brick::width();
 			}
 			x = 0;
 			y += Brick::height();
 		}
-
-		_ball = Ball(10, 10, 2.0f);
-		_platform = Platform(_halfWidth, _halfHeight);
 	}
 
-	void Fill(HDC hdc, PAINTSTRUCT ps) {
+	void DrawScreen(HDC hdc) {
 		for (int i = 0; i < _yBrickCount; i++)
 		{
 			for (int j = 0; j < _xBrickCount; j++)
 			{
-				if (!_bricks[i][j].isDestroyed())
-					Drawer::DrawBrick(hdc, &_bricks[i][j]);
+				if (!_bricks[i][j]->isDestroyed())
+					Drawer::DrawBrick(hdc, _bricks[i][j]);
 			}
 		}
 
-		Drawer::DrawBall(hdc, _ball);
-		Drawer::DrawPlatform(hdc, _platform);
+		Drawer::DrawBall(hdc, *_ball);
+		Drawer::DrawPlatform(hdc, *_platform);
 	}
 
-	void Update(float deltaTime) {
-		_ball.Move(deltaTime);
-		_platform.Move(_platformNewX);
+	void MovePlatform(int newPlatformX) {
+		_platform->Move(_platformNewX);
+	}
 
-		CheckCollisions(1);
+	void Update(HDC hdc, float deltaTime) {
+		DrawScreen(hdc);
+
+		_ball->Move(deltaTime);
+
+		CheckCollisions(deltaTime);
 	}
 
 	void Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
@@ -82,22 +87,22 @@ public:
 	}
 
 	void CheckCollisions(float deltaTime) {
-		RECT ballBounds = _ball.GetBounds();
-		RECT intersectRect;
 
-		if (_ball.GetX() - _ball.radius() <= 0 || _ball.GetX() + _ball.radius() >= _screenWidth) _ball.ReverseX();
+		float s = sqrt(pow(_ball->dx(), 2) + pow(_ball->dy(), 2));
+
+		/*if (_ball.GetX() - _ball.radius() <= 0 || _ball.GetX() + _ball.radius() >= _screenWidth) _ball.ReverseX();
 		if (_ball.GetY() - _ball.radius() <= 0) _ball.ReverseY();
 		if (_ball.GetY() + _ball.radius() >= _screenHeight) _ball.ReverseY();
 
 		if (IntersectRect(&intersectRect, &ballBounds, &_platform.GetBounds())) {
 			_ball.ReverseY();
-		}
+		}*/
 
 		for (int i = 0; i < _yBrickCount; ++i) {
 			for (int j = 0; j < _xBrickCount; ++j) {
-				if (!_bricks[i][j].isDestroyed() && IntersectRect(&intersectRect, &ballBounds, &_bricks[i][j].GetBounds())) {
-					_bricks[i][j].Destroy();
-					_ball.ReverseY();
+				if (false) {
+					_bricks[i][j]->Destroy();
+					_ball->ReverseY();
 				}
 			}
 		}

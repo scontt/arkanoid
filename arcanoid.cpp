@@ -26,7 +26,7 @@ int SCREEN_WIDTH = 800;
 int SCREEN_HEIGHT = 600;
 const int xBrickCount = 10;
 const int yBrickCount = 6;
-GameScreen screen;
+GameScreen* screen;
 RECT bricksField;
 std::chrono::steady_clock::time_point lastUpdate;
 
@@ -53,6 +53,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	screen = new GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	if (status != Gdiplus::Ok)
 		return 0;
@@ -81,8 +82,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-
-	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	return (int)msg.wParam;
 }
@@ -146,16 +145,30 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static DWORD lastTime = GetTickCount64();
+	DWORD currentTime = GetTickCount64();
 	static int newX;
-	static DWORD lastTime = GetTickCount();
+	float deltaTime = (currentTime - lastTime) / 1000.0f;
+
+	HDC hdc;
+	static HDC memoryDC;
+	static BITMAP bitmap;
+	HBITMAP hBitmap;
 
 	switch (message)
 	{
 	case WM_CREATE:
 	{
+		hdc = GetDC(hWnd);
+		hBitmap = CreateCompatibleBitmap(hdc, SCREEN_WIDTH, SCREEN_HEIGHT);
+		memoryDC = CreateCompatibleDC(hdc);
+		ReleaseDC(hWnd, hdc);
+		SelectObject(memoryDC, hBitmap);
+		DeleteObject(hBitmap);
+
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
 		lastUpdate = std::chrono::steady_clock::now();
-		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
+		SetTimer(hWnd, ID_TIMER1, 33, (TIMERPROC)NULL);
 	}
 	case WM_KEYDOWN:
 	{
@@ -164,16 +177,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 	{
 		newX = GET_X_LPARAM(lParam);
-
-
-
-		/*platform.Move(newX - platform.width() / 2);
-		RECT oldPlatform = { platform.lastX(), platform.y(), platform.lastX() + platform.width(), platform.y() + platform.height() };
-		RECT newPlatform = { platform.currentX(), platform.y(), platform.currentX() + platform.width(), platform.y() + platform.height() };
-
-		UnionRect(&oldPlatform, &oldPlatform, &newPlatform);
-
-		InvalidateRect(hWnd, &oldPlatform, FALSE);*/
 	}
 	break;
 	case WM_COMMAND:
@@ -198,8 +201,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wParam) {
 		case ID_TIMER1:
 			if (isStarted) {
-				DWORD currentTime = GetTickCount();
-				float deltaTime = (currentTime - lastTime) / 1000.0f;
+				RedrawWindow(hWnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
+				currentTime = GetTickCount64();
+				deltaTime = (currentTime - lastTime) / 1000.0f;
 				lastTime = currentTime;
 			}
 		}
@@ -207,10 +211,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_PAINT:
 	{
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);
-
+		SelectObject(memoryDC, GetStockObject(WHITE_BRUSH));
+		Rectangle(memoryDC, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 		
+		screen->Update(memoryDC, deltaTime);
+
+		PAINTSTRUCT ps;
+		hdc = BeginPaint(hWnd, &ps);
+		BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, memoryDC, 0, 0, SRCCOPY);
+		hdc = BeginPaint(hWnd, &ps);
 
 		EndPaint(hWnd, &ps);
 	}
@@ -247,11 +256,4 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void DrawFrame() {
 
-}
-
-void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps) {
-	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
-	screen.Fill(hdc, ps);
-
-	isScreenPrepared = true;
 }

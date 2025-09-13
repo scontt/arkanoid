@@ -6,14 +6,13 @@
 
 class Brick : public GameElement {
 private:
-	static int _width, _height;
+	static const int _width = 80, 
+					 _height = 18;
 
 	int _x, _y;
-	bool _isDestroyed;
+	bool _isDestroyed = false;
 
 public:
-	Brick() {}
-
 	Brick(int x, int y) : GameElement() {
 		_x = x;
 		_y = y;
