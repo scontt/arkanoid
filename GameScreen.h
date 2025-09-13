@@ -1,8 +1,11 @@
 #include <list>
-#include <windows.h>
 #include <stdio.h>
 #include "Brick.h"
 #include "Ball.h"
+
+#include <windows.h>
+#include <windowsx.h>
+#include <cmath>
 
 #pragma once
 
@@ -10,6 +13,8 @@ class GameScreen {
 private:
 	static const int _xBrickCount = 10;
 	static const int _yBrickCount = 6;
+	int x = 0;
+	int y = 0;
 	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 	int _platformNewX;
 
@@ -18,16 +23,93 @@ private:
 	Platform _platform;
 
 public:
-	GameScreen(int width, int height);
-	void Initialize();
-	void Fill(HDC, PAINTSTRUCT);
-	void Update(float deltaTime);
-	void Clear(HWND, HDC, PAINTSTRUCT, RECT);
-	void HandleMouseMove(LPARAM);
-	void CheckCollisions();
+	GameScreen() {}
 
-	int width() const;
-	int height() const;
-	int halfWidth() const;
-	int halfHeight() const;
+	GameScreen(int width, int height) {
+		_screenHeight = height;
+		_screenWidth = width;
+
+		_halfHeight = height / 2;
+		_halfWidth = width / 2;
+	}
+
+	void Initialize() {
+		for (size_t i = 0; i < _yBrickCount; i++)
+		{
+			for (size_t j = 0; j < _xBrickCount; j++)
+			{
+				Brick brick = Brick(x, y);
+				_bricks[i][j] = Brick(x, y);
+				x += Brick::width();
+			}
+			x = 0;
+			y += Brick::height();
+		}
+
+		_ball = Ball(10, 10, 2.0f);
+		_platform = Platform(_halfWidth, _halfHeight);
+	}
+
+	void Fill(HDC hdc, PAINTSTRUCT ps) {
+		for (int i = 0; i < _yBrickCount; i++)
+		{
+			for (int j = 0; j < _xBrickCount; j++)
+			{
+				if (!_bricks[i][j].isDestroyed())
+					Drawer::DrawBrick(hdc, &_bricks[i][j]);
+			}
+		}
+
+		Drawer::DrawBall(hdc, _ball);
+		Drawer::DrawPlatform(hdc, _platform);
+	}
+
+	void Update(float deltaTime) {
+		_ball.Move(deltaTime);
+		_platform.Move(_platformNewX);
+
+		CheckCollisions(1);
+	}
+
+	void Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
+		/*std::list<Brick>::iterator brick;
+		for (brick = bricks.begin(); brick != bricks.end(); brick++)
+		{
+			Drawer::EraseBrick(hWnd, ps, hdc, *brick);
+		}*/
+
+		Drawer::EraseBrick(hdc, clearRect);
+	}
+
+	void CheckCollisions(float deltaTime) {
+		RECT ballBounds = _ball.GetBounds();
+		RECT intersectRect;
+
+		if (_ball.GetX() - _ball.radius() <= 0 || _ball.GetX() + _ball.radius() >= _screenWidth) _ball.ReverseX();
+		if (_ball.GetY() - _ball.radius() <= 0) _ball.ReverseY();
+		if (_ball.GetY() + _ball.radius() >= _screenHeight) _ball.ReverseY();
+
+		if (IntersectRect(&intersectRect, &ballBounds, &_platform.GetBounds())) {
+			_ball.ReverseY();
+		}
+
+		for (int i = 0; i < _yBrickCount; ++i) {
+			for (int j = 0; j < _xBrickCount; ++j) {
+				if (!_bricks[i][j].isDestroyed() && IntersectRect(&intersectRect, &ballBounds, &_bricks[i][j].GetBounds())) {
+					_bricks[i][j].Destroy();
+					_ball.ReverseY();
+				}
+			}
+		}
+	}
+
+	void HandleMouseMove(LPARAM key) {
+		_platformNewX = GET_X_LPARAM(key);
+	}
+
+
+	int width() const { return this->_screenWidth; }
+	int height() const { return this->_screenHeight; }
+	int halfWidth() const { return this->_halfWidth; }
+	int halfHeight() const { return this->_halfHeight; }
 };

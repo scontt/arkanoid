@@ -25,8 +25,6 @@ private:
 
 	const int TRAIL_LENGTH = 5;
 
-	void ChangeVector(BallVectorDirection, PlatformVectorDirection);
-
 public:
 	Ball();
 	Ball(float x, float y, float startSpeed);

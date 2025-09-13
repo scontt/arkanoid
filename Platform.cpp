@@ -2,8 +2,8 @@
 #include "GameElement.h"
 #include "GameScreen.h"
 
-int Platform::_width = GameElement::sizeX;
-int Platform::_height = GameElement::sizeY;
+int _width = 70;
+int _height = 18;
 
 Platform::Platform(int x, int y) : GameElement() {
 	_x0 = _x1 = x;

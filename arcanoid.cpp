@@ -39,8 +39,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-void				PrepareScreen(HWND, HDC, PAINTSTRUCT, std::list<Brick>&);
-void				FillBricksList();
+void				DrawFrame();
 
 Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 ULONG_PTR gdiplusToken;
@@ -155,7 +154,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
-		FillBricksList();
 		lastUpdate = std::chrono::steady_clock::now();
 		SetTimer(hWnd, ID_TIMER1, 16, (TIMERPROC)NULL);
 	}
@@ -247,33 +245,13 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps,  bricks) {
-	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
-	screen.Fill(ps, bricks);
+void DrawFrame() {
 
-	ball = Ball::Ball();
-	ball.Initialize(2.0f);
-	Drawer::DrawBall(hdc, ball);
-
-	platform = Platform::Platform();
-	Drawer::DrawPlatform(hdc, platform);
-
-	isScreenPrepared = true;
 }
 
-void FillBricksList() {
-	int x = 0;
-	int y = 0;
+void PrepareScreen(HWND hWnd, HDC hdc, PAINTSTRUCT ps) {
+	screen = GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
+	screen.Fill(hdc, ps);
 
-	for (size_t i = 0; i < yBrickCount; i++)
-	{
-		for (size_t j = 0; j < xBrickCount; j++)
-		{
-			Brick brick = Brick(x, y);
-			bricks.push_back(brick);
-			x += Brick::width();
-		}
-		x = 0;
-		y += Brick::height();
-	}
+	isScreenPrepared = true;
 }
