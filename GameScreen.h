@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <cmath>
+#include <gdiplus.h>
 
 #pragma once
 
@@ -17,23 +18,53 @@ private:
 	int x = 0;
 	int y = 0;
 	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
-	int _platformNewX;
 
 	Brick* _bricks[_yBrickCount][_xBrickCount];
 	Ball* _ball;
 	Platform* _platform;
 
+	Gdiplus::Bitmap* backBuffer;
+	Gdiplus::Graphics* graphics;
+
+	void MovePlatform() {
+		if (GetAsyncKeyState(VK_LEFT) & 0x8000) {
+			_platform->Move(_platform->currentX() - 5);
+		}
+		if (GetAsyncKeyState(VK_RIGHT) & 0x8000) {
+			_platform->Move(_platform->currentX() + 5);
+		}
+	}
+
 public:
-	GameScreen(int width, int height) {
+	GameScreen(int width, int height, HWND hWnd) {
 		_screenHeight = height;
 		_screenWidth = width;
 
 		_halfHeight = height / 2;
 		_halfWidth = width / 2;
 
-		_ball = new Ball(10, 10, 2.0f);
-		_platform = new Platform(_halfWidth, _halfHeight);
+		_ball = new Ball(_halfWidth, _halfHeight, 100.0f);
+		_platform = new Platform(_halfWidth, _halfHeight + 100);
 		FillBricks();
+		Initialize(hWnd);
+	}
+
+	void Initialize(HWND hWnd) {
+		RECT rect;
+		GetClientRect(hWnd, &rect);
+		backBuffer = new Gdiplus::Bitmap(rect.right, rect.bottom);
+		graphics = Gdiplus::Graphics::FromImage(backBuffer);
+	}
+
+	void Render(HWND hWnd) {
+		graphics->Clear(Gdiplus::Color::Black);
+
+		DrawScreen(*graphics);
+
+		HDC hdc = GetDC(hWnd);
+		Gdiplus::Graphics window(hdc);
+		window.DrawImage(backBuffer, 0, 0);
+		ReleaseDC(hWnd, hdc);
 	}
 
 	void FillBricks() {
@@ -50,30 +81,28 @@ public:
 		}
 	}
 
-	void DrawScreen(HDC hdc) {
+	void DrawScreen(Gdiplus::Graphics& g) {
 		for (int i = 0; i < _yBrickCount; i++)
 		{
 			for (int j = 0; j < _xBrickCount; j++)
 			{
 				if (!_bricks[i][j]->isDestroyed())
-					Drawer::DrawBrick(hdc, _bricks[i][j]);
+					Drawer::DrawBrick(g, _bricks[i][j]);
 			}
 		}
 
-		Drawer::DrawBall(hdc, *_ball);
-		Drawer::DrawPlatform(hdc, *_platform);
+		Drawer::DrawBall(g, *_ball);
+		Drawer::DrawPlatform(g, *_platform);
 	}
 
-	void MovePlatform(int newPlatformX) {
-		_platform->Move(_platformNewX);
-	}
+	/*void MovePlatform(int newPlatformX) {
+		_platform->Move(newPlatformX);
+	}*/
 
 	void Update(HDC hdc, float deltaTime) {
-		DrawScreen(hdc);
-
 		_ball->Move(deltaTime);
-
 		CheckCollisions(deltaTime);
+		MovePlatform();
 	}
 
 	void Clear(HWND hWnd, HDC hdc, PAINTSTRUCT ps, RECT clearRect) {
@@ -108,13 +137,13 @@ public:
 		}
 	}
 
-	void HandleMouseMove(LPARAM key) {
+	/*void HandleMouseMove(LPARAM key) {
 		_platformNewX = GET_X_LPARAM(key);
-	}
-
+	}*/
 
 	int width() const { return this->_screenWidth; }
 	int height() const { return this->_screenHeight; }
 	int halfWidth() const { return this->_halfWidth; }
 	int halfHeight() const { return this->_halfHeight; }
+	int platformX() const { return this->_platform->currentX(); }
 };

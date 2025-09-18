@@ -34,6 +34,8 @@ bool isStarted = false;
 bool isScreenFilled = false;
 bool isBrickHit;
 
+float deltaTime = 0;
+
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -53,7 +55,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	screen = new GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	if (status != Gdiplus::Ok)
 		return 0;
@@ -85,8 +86,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	return (int)msg.wParam;
 }
-
-
 
 //
 //  ФУНКЦИЯ: MyRegisterClass()
@@ -137,6 +136,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
+	screen = new GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT, hWnd);
+
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 
@@ -148,7 +149,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static DWORD lastTime = GetTickCount64();
 	DWORD currentTime = GetTickCount64();
 	static int newX;
-	float deltaTime = (currentTime - lastTime) / 1000.0f;
 
 	HDC hdc;
 	static HDC memoryDC;
@@ -159,24 +159,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
-		hdc = GetDC(hWnd);
-		hBitmap = CreateCompatibleBitmap(hdc, SCREEN_WIDTH, SCREEN_HEIGHT);
-		memoryDC = CreateCompatibleDC(hdc);
-		ReleaseDC(hWnd, hdc);
-		SelectObject(memoryDC, hBitmap);
-		DeleteObject(hBitmap);
-
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
 		lastUpdate = std::chrono::steady_clock::now();
-		SetTimer(hWnd, ID_TIMER1, 33, (TIMERPROC)NULL);
-	}
-	case WM_KEYDOWN:
-	{
-		isStarted = true;
-	}
-	case WM_MOUSEMOVE:
-	{
-		newX = GET_X_LPARAM(lParam);
+		SetTimer(hWnd, ID_TIMER1, 1000/75, (TIMERPROC)NULL);
 	}
 	break;
 	case WM_COMMAND:
@@ -200,26 +185,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (wParam) {
 		case ID_TIMER1:
-			if (isStarted) {
-				RedrawWindow(hWnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
-				currentTime = GetTickCount64();
-				deltaTime = (currentTime - lastTime) / 1000.0f;
-				lastTime = currentTime;
-			}
+			InvalidateRect(hWnd, NULL, TRUE);
+			currentTime = GetTickCount64();
+			deltaTime = (currentTime - lastTime) / 1000.0f;
+			lastTime = currentTime;
+			screen->Update(memoryDC, deltaTime);
 		}
 		break;
 	}
 	case WM_PAINT:
-	{
-		SelectObject(memoryDC, GetStockObject(WHITE_BRUSH));
-		Rectangle(memoryDC, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-		
-		screen->Update(memoryDC, deltaTime);
-
+	{		
 		PAINTSTRUCT ps;
-		hdc = BeginPaint(hWnd, &ps);
-		BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, memoryDC, 0, 0, SRCCOPY);
-		hdc = BeginPaint(hWnd, &ps);
+		HDC hdc = BeginPaint(hWnd, &ps);
+		screen->Render(hWnd);
 
 		EndPaint(hWnd, &ps);
 	}
@@ -228,6 +206,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		KillTimer(hWnd, ID_TIMER1);
 		PostQuitMessage(0);
 		break;
+	case WM_ERASEBKGND:
+		return TRUE;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
