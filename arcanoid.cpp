@@ -148,12 +148,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static DWORD lastTime = GetTickCount64();
 	DWORD currentTime = GetTickCount64();
-	static int newX;
-
-	HDC hdc;
-	static HDC memoryDC;
-	static BITMAP bitmap;
-	HBITMAP hBitmap;
 
 	switch (message)
 	{
@@ -189,7 +183,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			currentTime = GetTickCount64();
 			deltaTime = (currentTime - lastTime) / 1000.0f;
 			lastTime = currentTime;
-			screen->Update(memoryDC, deltaTime);
+			screen->Update(deltaTime);
 		}
 		break;
 	}

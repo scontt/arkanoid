@@ -39,22 +39,9 @@ public:
 		g.DrawRectangle(&pen, platform.currentX(), platform.y(), platform.width(), platform.height());
 	}
 
-	static void DrawTrail(Gdiplus::Graphics& graphics, Ball ball) {
-		float direction = atan2f(ball.dy(), ball.dx());
-		Gdiplus::Pen pen(Gdiplus::Color(128, 255, 255, 255), 1.0f);
-
-		/*for (size_t i = 0; i < 5; ++i) {
-			Point pos = ball.trail[i];
-			float alpha = 255 * (1.0f - static_cast<float>(i) / ball.trail.size());
-			pen.SetColor(Gdiplus::Color(static_cast<BYTE>(alpha), 255, 255, 255));
-
-			for (int p = -10 / 2; p <= 10 / 2; ++p) {
-				float angle = direction + (p * (3.14159f / 10));
-				float px = pos.X + ball.radius() * cosf(angle);
-				float py = pos.Y + ball.radius() * sinf(angle);
-				graphics.DrawLine(&pen, px - 0.5f, py, px + 0.5f, py);
-			}
-		}*/
+	static void DrawPoint(Gdiplus::Graphics& g, int x, int y) {
+		Gdiplus::SolidBrush brush(Gdiplus::Color(128, 255, 0, 0));
+		g.FillEllipse(&brush, x, y, 7, 7);
 	}
 
 
