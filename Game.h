@@ -15,7 +15,7 @@
 
 #define DEBUG_LAYER TRUE
 
-class GameScreen {
+class Game {
 private:
 	static const int _xBrickCount = 10;
 	static const int _yBrickCount = 10;
@@ -43,7 +43,7 @@ private:
 	}
 
 public:
-	GameScreen(int width, int height, HWND hWnd) {
+	Game(int width, int height, HWND hWnd) {
 		_screenHeight = height;
 		_screenWidth = width;
 
@@ -117,24 +117,24 @@ public:
 
 	void CheckCollisions() {
 
-		float s = sqrt(pow(_ball->dx() - _ball->x(), 2) + pow(_ball->dy() - _ball->y(), 2));
+		float s = sqrt(pow(_ball->x1() - _ball->x(), 2) + pow(_ball->y1() - _ball->y(), 2));
 
-		for (float i = 0; i < s; i+=0.02f)
+		for (float i = 0; i < s; i+=1.5f)
 		{
-			xs = _ball->x() + i / s * _ball->dx();
-			ys = _ball->y() + i / s * _ball->dy();
+			xs = _ball->x() + i / s * (_ball->x1() - _ball->x());
+			ys = _ball->y() + i / s * (_ball->y1() - _ball->y());
 
+			for (int i = 0; i < _yBrickCount; ++i) {
+				for (int j = 0; j < _xBrickCount; ++j) {
+					if (false) {
+						_bricks[i][j]->Destroy();
+						_ball->ReverseY();
+					}
+				}
+			}
 			_points.push_back(TracePoint(xs, ys));
 		}
 
-		/*for (int i = 0; i < _yBrickCount; ++i) {
-			for (int j = 0; j < _xBrickCount; ++j) {
-				if (false) {
-					_bricks[i][j]->Destroy();
-					_ball->ReverseY();
-				}
-			}
-		}*/
 	}
 
 	int width() const { return this->_screenWidth; }

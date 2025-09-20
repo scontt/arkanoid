@@ -7,7 +7,7 @@
 #include <chrono>
 #include <string>
 
-#include "GameScreen.h"
+#include "Game.h"
 #include "Ball.h"
 #include "Drawer.h"
 #include "Brick.h"
@@ -26,7 +26,7 @@ int SCREEN_WIDTH = 800;
 int SCREEN_HEIGHT = 600;
 const int xBrickCount = 10;
 const int yBrickCount = 6;
-GameScreen* screen;
+Game* screen;
 RECT bricksField;
 std::chrono::steady_clock::time_point lastUpdate;
 
@@ -136,7 +136,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
-	screen = new GameScreen(SCREEN_WIDTH, SCREEN_HEIGHT, hWnd);
+	screen = new Game(SCREEN_WIDTH, SCREEN_HEIGHT, hWnd);
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);

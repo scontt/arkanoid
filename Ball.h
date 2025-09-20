@@ -15,8 +15,8 @@ class Ball : public GameElement {
 private:
 	int _diameter = 18;
 	int _radius;
-	int _x, _y;
-	int _dx, _dy;
+	int _x0, _y0;
+	int _x1, _y1;
 	float _speed;
 
 	const int TRAIL_LENGTH = 5;
@@ -25,24 +25,24 @@ public:
 	Ball(float x, float y, float startSpeed) : GameElement() {
 		_radius = _diameter / 2;
 
-		_x = x;
-		_y = y;
-		_dx = x;
-		_dy = y;
+		_x0 = x;
+		_y0 = y;
+		_x1 = x;
+		_y1 = y;
 
 		_speed = startSpeed;
 	}
 
 	void Move(float deltaTime) {
-		_x = _dx;
-		_y = _dy;
+		_x0 = _x1;
+		_y0 = _y1;
 
-		_dx += _speed * deltaTime;
-		_dy += _speed * deltaTime;
+		_x1 += _speed * deltaTime;
+		_y1 += _speed * deltaTime;
 	}
 
 	bool IsFell(int gameScreenHeight) {
-		return _y + diameter() > gameScreenHeight;
+		return _y0 + diameter() > gameScreenHeight;
 	}
 
 	void CheckPlatformCollition(Platform platform) {
@@ -72,8 +72,8 @@ public:
 		}*/
 	}
 
-	void ReverseX() { _dx = -_dx; }
-	void ReverseY() { _dy = -_dy; }
+	void ReverseX() { _x1 = -_x1; }
+	void ReverseY() { _y1 = -_y1; }
 
 	//void ChangeVector(BallVectorDirection bDirection, PlatformVectorDirection pDirection) {
 	//	yVector *= -1.0f;
@@ -113,10 +113,10 @@ public:
 	//	return false;
 	//}
 
-	int x() const { return _x; }
-	int y() const { return _y; }
-	int dx() const { return _dx; }
-	int dy() const { return _dy; }
+	int x() const { return _x0; }
+	int y() const { return _y0; }
+	int x1() const { return _x1; }
+	int y1() const { return _y1; }
 
 	int diameter() const { return _diameter; }
 	int radius() const { return _radius; }
