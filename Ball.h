@@ -17,7 +17,7 @@ private:
 	int _radius;
 	int _x0, _y0;
 	int _x1, _y1;
-	float _speed;
+	float _xSpeed, _ySpeed;
 
 	const int TRAIL_LENGTH = 5;
 
@@ -30,15 +30,16 @@ public:
 		_x1 = x;
 		_y1 = y;
 
-		_speed = startSpeed;
+		_xSpeed = 100;
+		_ySpeed = 100;
 	}
 
 	void Move(float deltaTime) {
 		_x0 = _x1;
 		_y0 = _y1;
 
-		_x1 += _speed * deltaTime;
-		_y1 += _speed * deltaTime;
+		_x1 += _xSpeed * deltaTime;
+		_y1 += _ySpeed * deltaTime;
 	}
 
 	bool IsFell(int gameScreenHeight) {
@@ -72,8 +73,8 @@ public:
 		}*/
 	}
 
-	void ReverseX() { _x1 = -_x1; }
-	void ReverseY() { _y1 = -_y1; }
+	void ReverseX() { _xSpeed *= -1; }
+	void ReverseY() { _ySpeed *= -1; }
 
 	//void ChangeVector(BallVectorDirection bDirection, PlatformVectorDirection pDirection) {
 	//	yVector *= -1.0f;
@@ -121,5 +122,5 @@ public:
 	int diameter() const { return _diameter; }
 	int radius() const { return _radius; }
 
-	float speed() const { return _speed; }
+	float speed() const { return _xSpeed; }
 };

@@ -155,7 +155,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
 		lastUpdate = std::chrono::steady_clock::now();
-		SetTimer(hWnd, ID_TIMER1, 1000/75, (TIMERPROC)NULL);
+		SetTimer(hWnd, ID_TIMER1, 1000/60, (TIMERPROC)NULL);
 	}
 	break;
 	case WM_COMMAND:

@@ -41,29 +41,7 @@ public:
 
 	static void DrawPoint(Gdiplus::Graphics& g, int x, int y) {
 		Gdiplus::SolidBrush brush(Gdiplus::Color(128, 255, 0, 0));
-		g.FillEllipse(&brush, x, y, 7, 7);
-	}
-
-
-	static void ErasePlatform(HDC hdc, Platform platform) {
-		Gdiplus::Graphics g(hdc);
-		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 255, 255, 255));
-		g.FillRectangle(&brush, platform.lastX(), platform.y(), platform.width(), platform.height());
-	}
-
-	static void EraseBall(HDC hdc, Ball ball) {
-		Gdiplus::Graphics g(hdc);
-		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 255, 255, 255));
-		g.FillRectangle(&brush, ball.x(), ball.y(), ball.diameter(), ball.diameter());
-	}
-
-	static void EraseBrick(HDC hdc, RECT clearRect) {
-		Gdiplus::Graphics g(hdc);
-		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 255, 255, 255));
-		int x = clearRect.left;
-		int y = clearRect.top;
-		int width = clearRect.right - clearRect.left;
-		int height = clearRect.bottom - clearRect.top;
-		g.FillRectangle(&brush, x, y, width, height);
+		g.FillEllipse(&brush, x, y, 5, 5);
+		
 	}
 };
