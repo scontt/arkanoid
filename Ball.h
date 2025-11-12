@@ -12,51 +12,44 @@
 #pragma once
 
 class Ball : public GameElement {
-private:
+public:
 	int _diameter = 18;
 	int _radius;
 	int _x0, _y0;
-	int _x1, _y1;
-	float _xSpeed, _ySpeed;
+	float _speed;
+	float _dx, _dy;
 
 	const int TRAIL_LENGTH = 5;
 
-public:
+
 	Ball(float x, float y, float startSpeed) : GameElement() {
 		_radius = _diameter / 2;
 
 		_x0 = x;
 		_y0 = y;
-		_x1 = x;
-		_y1 = y;
 
-		_xSpeed = 400;
-		_ySpeed = 400;
+		_dx = 3;
+		_dy = -7;
+
+		float len = sqrt(_dx * _dx + _dy * _dy);
+
+		_dx = _dx / len;
+		_dy = _dy / len;
+
+		_speed = 1;
+		
 	}
 
-	void Move(float deltaTime) {
-		_x0 = _x1;
-		_y0 = _y1;
-
-		_x1 += _xSpeed * deltaTime;
-		_y1 += _ySpeed * deltaTime;
-	}
 
 	bool IsFell(int gameScreenHeight) {
 		return _y0 + diameter() > gameScreenHeight;
 	}
 
-	void ReverseX() { _xSpeed *= -1; }
-	void ReverseY() { _ySpeed *= -1; }
+	void ReverseX() { _dx *= -1; }
+	void ReverseY() { _dy *= -1; }
 
-	int x() const { return _x0; }
-	int y() const { return _y0; }
-	int x1() const { return _x1; }
-	int y1() const { return _y1; }
 
 	int diameter() const { return _diameter; }
 	int radius() const { return _radius; }
 
-	float speedX() const { return _xSpeed; }
-	float speedY() const { return _ySpeed; }
 };

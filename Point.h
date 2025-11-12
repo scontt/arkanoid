@@ -1,9 +1,15 @@
 #pragma once
 
 class Point {
-public:
-	Point(int x, int y);
+private:
+	float _x, _y;
 
-	int X;
-	int Y;
+public:
+	Point(float x, float y) {
+		_x = x;
+		_y = y;
+	}
+
+	float x() const { return _x; }
+	float y() const { return _y; }
 };

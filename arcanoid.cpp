@@ -155,7 +155,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		bricksField = { 0, 0, SCREEN_WIDTH, Brick::height() * 9 };
 		lastUpdate = std::chrono::steady_clock::now();
-		SetTimer(hWnd, ID_TIMER1, 1000/60, (TIMERPROC)NULL);
+		SetTimer(hWnd, ID_TIMER1, 1000/60*10, (TIMERPROC)NULL);
 	}
 	break;
 	case WM_COMMAND:
@@ -181,9 +181,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_TIMER1:
 			InvalidateRect(hWnd, NULL, TRUE);
 			currentTime = GetTickCount64();
-			deltaTime = (currentTime - lastTime) / 1000.0f;
+			deltaTime = 60*(currentTime - lastTime) / 1000.0f;
 			lastTime = currentTime;
-			screen->Update(deltaTime);
+			
 		}
 		break;
 	}
@@ -191,9 +191,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{		
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
-		screen->Render(hWnd);
+		
+//		screen->Render(hWnd);
 
+		screen->graphics->Clear(Gdiplus::Color::Black);
+
+		screen->DrawScreen(*screen->graphics);
+		screen->Update(deltaTime);
+
+		//if (DEBUG_LAYER) 
+		{
+			for (size_t i = 0; i < screen->_points.size(); i++)
+			{
+			//	Drawer::DrawPoint(*screen->graphics, screen->_points[i].x(), screen->_points[i].y());
+			}
+
+			if (!screen->_points.empty())
+			{
+				screen->_points.erase(screen->_points.begin());
+			}
+		}
+
+
+		hdc = GetDC(hWnd);
+		Gdiplus::Graphics window(hdc);
+		window.DrawImage(screen->backBuffer, 0, 0);
+		ReleaseDC(hWnd, hdc);
+
+
+
+		
 		EndPaint(hWnd, &ps);
+
+		//Sleep(100);
 	}
 	break;
 	case WM_DESTROY:

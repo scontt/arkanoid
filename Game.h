@@ -3,7 +3,7 @@
 #include "Brick.h"
 #include "Ball.h"
 #include "Drawer.h"
-#include "TracePoint.h"
+#include "Point.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -13,19 +13,19 @@
 
 #pragma once
 
-//#define DEBUG_LAYER TRUE
-#define DEBUG_LAYER FALSE
+#define DEBUG_LAYER TRUE
+//#define DEBUG_LAYER FALSE
 #define M_PI 3.14159265358979323846
 
 class Game {
-private:
+public:
 	static const int _xBrickCount = 10;
 	static const int _yBrickCount = 10;
 	int x = 0;
 	int y = 0;
 	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 
-	std::vector<TracePoint> _points;
+	std::vector<Point> _points;
 	Brick* _bricks[_yBrickCount][_xBrickCount];
 	Ball* _ball;
 	Platform* _platform;
@@ -42,7 +42,7 @@ private:
 		}
 	}
 
-public:
+
 	Game(int width, int height, HWND hWnd) {
 		_screenHeight = height;
 		_screenWidth = width;
@@ -98,104 +98,84 @@ public:
 			}
 		}
 
-		if (DEBUG_LAYER) {
-			for (size_t i = 0; i < _points.size(); i++)
-			{
-				Drawer::DrawPoint(g, _points[i].x(), _points[i].y());
-			}
-		}
-
 		Drawer::DrawBall(g, *_ball);
 		Drawer::DrawPlatform(g, *_platform);
+		
+		
 	}
 
 	void Update(float deltaTime) {
 		if (!_ball->IsFell(_screenHeight)) {
-			_ball->Move(deltaTime);
-			CheckCollisions();
+			//_ball->Move(deltaTime);
+			CheckCollisions(deltaTime);
 		}
 		ProcessPlatformMoving();
 	}
 
-	void CheckCollisions() {
-		float dx = _ball->x1() - _ball->x();
-		float dy = _ball->y1() - _ball->y();
-		float s = sqrt(dx * dx + dy * dy);
-		float currentAngle = atan2(dy, dx);
+	void CheckCollisions(float deltaTime) {
+		float ds = deltaTime * _ball->_speed;
+		float __dx = _ball->_dx* ds;
+		float __dy = _ball->_dy* ds;
+		float s = sqrt(__dx*__dx + __dy*__dy);
 
-		const int pointCount = 8;
-		std::vector<std::pair<float, float>> borderPoints;
+		float xs = _ball->_x0;
+		float ys = _ball->_y0;
 
-		for (int i = 0; i < pointCount; ++i) {
-			float angleOffset = currentAngle - M_PI / 2 + (i * M_PI / (pointCount - 1));
-			float xb = (_ball->x() + _ball->radius()) + _ball->radius() * cos(angleOffset);
-			float yb = (_ball->y() + _ball->radius()) + _ball->radius() * sin(angleOffset);
-			borderPoints.push_back({ xb, yb });
-		}
+		for (float i = 0; i < s; i += 3.0f) {
 
-		for (float i = 0; i < s; i += .1f) {
-			for (const auto& point : borderPoints) {
-				float xs = point.first + i / s * dx;
-				float ys = point.second + i / s * dy;
+			xs += _ball->_dx * ds;
+			ys += _ball->_dy * ds;
 
-				if (DEBUG_LAYER) {
-					_points.push_back(TracePoint(xs, ys));
-					if (_points.size() > 10000)
-						_points.erase(_points.begin());
-				}
+			if (DEBUG_LAYER) {
+				//_points.push_back(Point(xs, ys));
+				Drawer::DrawPoint(*graphics, xs, ys);
+			}
 
-				// коллизия платформы
-				if ((ys >= _platform->y() && ys <= _platform->y() + _platform->height()) &&
-					/*(xs >= _platform->currentX() && xs <= _platform->currentX() + _platform->width()) &&*/
-					_ball->speedY() > 0) {
+			if (xs <= .0f ) {
+				_ball->ReverseX();
+			}
+			if (xs >= _screenWidth - 10 ) {
+				_ball->ReverseX();
+			}
+			if (ys <= .0f ) {
+				_ball->ReverseY();
+			}
+			if (ys >= _screenHeight ) {
+				_ball->ReverseY();
+			}
 
-					_ball->ReverseY();
-				}
+			for (int i = 0; i < _yBrickCount; ++i) {
+				for (int j = 0; j < _xBrickCount; ++j) {
+					if ((ys > _bricks[i][j]->y() && ys < _bricks[i][j]->y() + _bricks[i][j]->height()) &&
+						(xs > _bricks[i][j]->x() && xs < _bricks[i][j]->x() + _bricks[i][j]->width()) &&
+						!_bricks[i][j]->isDestroyed()) {
 
-				// коллизии стен
-				if (xs <= .0f && _ball->speedX() < .0f) {
-					_ball->ReverseX();
-					return;
-				}
-				if (xs >= _screenWidth - 10 && _ball->speedX() > .0f) {
-					_ball->ReverseX();
-					return;
-				}
-				if (ys <= .0f && _ball->speedY() < .0f) {
-					_ball->ReverseY();
-					return;
-				}
-				if (ys >= _screenHeight && _ball->speedY() > .0f) {
-					_ball->ReverseY();
-					return;
-				}
+						_bricks[i][j]->Destroy();
 
-				//коллизии кирпичей
-				for (int i = 0; i < _yBrickCount; ++i) {
-					for (int j = 0; j < _xBrickCount; ++j) {
-						if ((ys > _bricks[i][j]->y() && ys < _bricks[i][j]->y() + _bricks[i][j]->height()) &&
-							(xs > _bricks[i][j]->x() && xs < _bricks[i][j]->x() + _bricks[i][j]->width()) &&
-							!_bricks[i][j]->isDestroyed()) {
+						float brickCenterX = _bricks[i][j]->x() + _bricks[i][j]->width() / 2.0f;
+						float brickCenterY = _bricks[i][j]->y() + _bricks[i][j]->height() / 2.0f;
 
-							_bricks[i][j]->Destroy();
+						float distX = fabs(xs - brickCenterX) / (_bricks[i][j]->width() / 2.0f);
+						float distY = fabs(ys - brickCenterY) / (_bricks[i][j]->height() / 2.0f);
 
-							float brickCenterX = _bricks[i][j]->x() + _bricks[i][j]->width() / 2.0f;
-							float brickCenterY = _bricks[i][j]->y() + _bricks[i][j]->height() / 2.0f;
-							
-							float distX = fabs(xs - brickCenterX) / (_bricks[i][j]->width() / 2.0f);
-							float distY = fabs(ys - brickCenterY) / (_bricks[i][j]->height() / 2.0f);
-
-							if (distX > distY)
-								_ball->ReverseX();
-							else
-								_ball->ReverseY();
-
-							return;
+						if (distX > distY)
+						{
+							_ball->ReverseX();
+						}
+						else
+						{
+							_ball->ReverseY();
 						}
 					}
 				}
 			}
 		}
+
+
+		_ball->_x0 = xs;
+		_ball->_y0 = ys;
+
+
 	}
 
 	int width() const { return this->_screenWidth; }

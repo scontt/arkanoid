@@ -22,10 +22,10 @@ public:
 
 	static void DrawBall(Gdiplus::Graphics& g, Ball ball) {
 		Gdiplus::SolidBrush brush(Gdiplus::Color(100, 0, 0, 0));
-		g.FillEllipse(&brush, ball.x(), ball.y(), ball.diameter(), ball.diameter());
+		g.FillEllipse(&brush, ball._x0, ball._y0, ball.diameter(), ball.diameter());
 
-		Gdiplus::Pen pen(Gdiplus::Color(150, 255, 255, 255));
-		g.DrawEllipse(&pen, ball.x(), ball.y(), ball.diameter(), ball.diameter());
+		Gdiplus::Pen pen(Gdiplus::Color(100, 255, 255, 255));
+		g.DrawEllipse(&pen, ball._x0, ball._y0, ball.diameter(), ball.diameter());
 	}
 
 	static void DrawPlatform(Gdiplus::Graphics& g, Platform platform) {
