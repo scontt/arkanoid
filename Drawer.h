@@ -13,7 +13,6 @@ static class Drawer {
 public:
 	static void DrawBrick(Gdiplus::Graphics& g, Brick* brick) {
 
-		//Gdiplus::Graphics g(hdc);
 		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 0));
 		g.FillRectangle(&brush, brick->x(), brick->y(), brick->width(), brick->height());
 
@@ -22,16 +21,14 @@ public:
 	}
 
 	static void DrawBall(Gdiplus::Graphics& g, Ball ball) {
-		//Gdiplus::Graphics g(hdc);
-		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 0));
+		Gdiplus::SolidBrush brush(Gdiplus::Color(100, 0, 0, 0));
 		g.FillEllipse(&brush, ball.x(), ball.y(), ball.diameter(), ball.diameter());
 
-		Gdiplus::Pen pen(Gdiplus::Color(255, 255, 255, 255));
+		Gdiplus::Pen pen(Gdiplus::Color(150, 255, 255, 255));
 		g.DrawEllipse(&pen, ball.x(), ball.y(), ball.diameter(), ball.diameter());
 	}
 
 	static void DrawPlatform(Gdiplus::Graphics& g, Platform platform) {
-		//Gdiplus::Graphics g(hdc);
 		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 0));
 		g.FillRectangle(&brush, platform.currentX(), platform.y(), platform.width(), platform.height());
 
@@ -41,7 +38,6 @@ public:
 
 	static void DrawPoint(Gdiplus::Graphics& g, int x, int y) {
 		Gdiplus::SolidBrush brush(Gdiplus::Color(128, 255, 0, 0));
-		g.FillEllipse(&brush, x, y, 5, 5);
-		
+		g.FillEllipse(&brush, x, y, 2, 2);
 	}
 };

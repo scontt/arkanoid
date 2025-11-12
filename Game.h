@@ -13,7 +13,8 @@
 
 #pragma once
 
-#define DEBUG_LAYER TRUE
+#define DEBUG_LAYER FALSE
+#define M_PI 3.14159265358979323846
 
 class Game {
 private:
@@ -21,8 +22,6 @@ private:
 	static const int _yBrickCount = 10;
 	int x = 0;
 	int y = 0;
-	float xs = 0.0f;
-	float ys = 0.0f;
 	int _screenWidth, _screenHeight, _halfWidth, _halfHeight;
 
 	std::vector<TracePoint> _points;
@@ -35,10 +34,10 @@ private:
 
 	void ProcessPlatformMoving() {
 		if (GetAsyncKeyState(VK_LEFT) & 0x8000) {
-			_platform->Move(_platform->currentX() - 7);
+			_platform->Move(_platform->currentX() - 12);
 		}
 		if (GetAsyncKeyState(VK_RIGHT) & 0x8000) {
-			_platform->Move(_platform->currentX() + 7);
+			_platform->Move(_platform->currentX() + 12);
 		}
 	}
 
@@ -118,34 +117,85 @@ public:
 	}
 
 	void CheckCollisions() {
-		float s = sqrt(pow(_ball->x1() - _ball->x(), 2) + pow(_ball->y1() - _ball->y(), 2));
+		float dx = _ball->x1() - _ball->x();
+		float dy = _ball->y1() - _ball->y();
+		float s = sqrt(dx * dx + dy * dy);
+		float currentAngle = atan2(dy, dx);
 
-		for (float i = 0; i < s; i+=1.5f)
-		{
-			xs = (_ball->x() + i / s * (_ball->x1() - _ball->x())) + _ball->radius();
-			ys = (_ball->y() + i / s * (_ball->y1() - _ball->y())) + _ball->radius();
+		const int pointCount = 8;
+		std::vector<std::pair<float, float>> borderPoints;
 
-			if ((ys > _platform->y() && ys < _platform->y() + _platform->height()) &&
-				(xs > _platform->currentX() && xs < _platform->currentX() + _platform->width())) {
+		for (int i = 0; i < pointCount; ++i) {
+			float angleOffset = currentAngle - M_PI / 2 + (i * M_PI / (pointCount - 1));
+			float xs = (_ball->x() + _ball->radius()) + _ball->radius() * cos(angleOffset);
+			float ys = (_ball->y() + _ball->radius()) + _ball->radius() * sin(angleOffset);
+			borderPoints.push_back({ xs, ys });
+		}
 
-				_ball->ReverseY();
-				_ball->ReverseX();
-			}
+		for (float i = 0; i < s; i += .5f) {
+			float interpolationFactor = i / s;
 
-			for (int i = 0; i < _yBrickCount; ++i) {
-				for (int j = 0; j < _xBrickCount; ++j) {
-					if ((ys > _bricks[i][j]->y() && ys < _bricks[i][j]->y() + _bricks[i][j]->height()) &&
-						(xs > _bricks[i][j]->x() && xs < _bricks[i][j]->x() + _bricks[i][j]->width())) {
+			for (const auto& point : borderPoints) {
+				float xs = point.first + interpolationFactor * dx;
+				float ys = point.second + interpolationFactor * dy;
 
-						_bricks[i][j]->Destroy();
-						_ball->ReverseY();
-						_ball->ReverseX();
+				if (DEBUG_LAYER) {
+					_points.push_back(TracePoint(xs, ys));
+					if (_points.size() > 10000)
+						_points.erase(_points.begin());
+				}
+
+				// коллизия платформы
+				if ((ys >= _platform->y() && ys <= _platform->y() + _platform->height()) &&
+					/*(xs >= _platform->currentX() && xs <= _platform->currentX() + _platform->width()) &&*/
+					_ball->speedY() > 0) {
+
+					_ball->ReverseY();
+				}
+
+				// коллизии стен
+				if (xs <= .0f && _ball->speedX() < .0f) {
+					_ball->ReverseX();
+					return;
+				}
+				if (xs >= _screenWidth - 10 && _ball->speedX() > .0f) {
+					_ball->ReverseX();
+					return;
+				}
+				if (ys <= .0f && _ball->speedY() < .0f) {
+					_ball->ReverseY();
+					return;
+				}
+				if (ys >= _screenHeight && _ball->speedY() > .0f) {
+					_ball->ReverseY();
+					return;
+				}
+
+				//коллизии кирпичей
+				for (int i = 0; i < _yBrickCount; ++i) {
+					for (int j = 0; j < _xBrickCount; ++j) {
+						if ((ys > _bricks[i][j]->y() && ys < _bricks[i][j]->y() + _bricks[i][j]->height()) &&
+							(xs > _bricks[i][j]->x() && xs < _bricks[i][j]->x() + _bricks[i][j]->width()) &&
+							!_bricks[i][j]->isDestroyed()) {
+
+							_bricks[i][j]->Destroy();
+
+							float brickCenterX = _bricks[i][j]->x() + _bricks[i][j]->width() / 2.0f;
+							float brickCenterY = _bricks[i][j]->y() + _bricks[i][j]->height() / 2.0f;
+
+							float distX = fabs(xs - brickCenterX) / (_bricks[i][j]->width() / 2.0f);
+							float distY = fabs(ys - brickCenterY) / (_bricks[i][j]->height() / 2.0f);
+
+							if (distX > distY)
+								_ball->ReverseX();
+							else
+								_ball->ReverseY();
+
+							return;
+						}
 					}
 				}
 			}
-
-			if (DEBUG_LAYER)
-				_points.push_back(TracePoint(xs, ys));
 		}
 	}
 
