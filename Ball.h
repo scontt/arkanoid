@@ -30,8 +30,8 @@ public:
 		_x1 = x;
 		_y1 = y;
 
-		_xSpeed = 200;
-		_ySpeed = 200;
+		_xSpeed = 400;
+		_ySpeed = 400;
 	}
 
 	void Move(float deltaTime) {

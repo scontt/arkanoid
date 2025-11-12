@@ -13,6 +13,7 @@
 
 #pragma once
 
+//#define DEBUG_LAYER TRUE
 #define DEBUG_LAYER FALSE
 #define M_PI 3.14159265358979323846
 
@@ -127,17 +128,15 @@ public:
 
 		for (int i = 0; i < pointCount; ++i) {
 			float angleOffset = currentAngle - M_PI / 2 + (i * M_PI / (pointCount - 1));
-			float xs = (_ball->x() + _ball->radius()) + _ball->radius() * cos(angleOffset);
-			float ys = (_ball->y() + _ball->radius()) + _ball->radius() * sin(angleOffset);
-			borderPoints.push_back({ xs, ys });
+			float xb = (_ball->x() + _ball->radius()) + _ball->radius() * cos(angleOffset);
+			float yb = (_ball->y() + _ball->radius()) + _ball->radius() * sin(angleOffset);
+			borderPoints.push_back({ xb, yb });
 		}
 
-		for (float i = 0; i < s; i += .5f) {
-			float interpolationFactor = i / s;
-
+		for (float i = 0; i < s; i += .1f) {
 			for (const auto& point : borderPoints) {
-				float xs = point.first + interpolationFactor * dx;
-				float ys = point.second + interpolationFactor * dy;
+				float xs = point.first + i / s * dx;
+				float ys = point.second + i / s * dy;
 
 				if (DEBUG_LAYER) {
 					_points.push_back(TracePoint(xs, ys));
@@ -182,7 +181,7 @@ public:
 
 							float brickCenterX = _bricks[i][j]->x() + _bricks[i][j]->width() / 2.0f;
 							float brickCenterY = _bricks[i][j]->y() + _bricks[i][j]->height() / 2.0f;
-
+							
 							float distX = fabs(xs - brickCenterX) / (_bricks[i][j]->width() / 2.0f);
 							float distY = fabs(ys - brickCenterY) / (_bricks[i][j]->height() / 2.0f);
 
